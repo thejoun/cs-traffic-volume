@@ -14,6 +14,12 @@ namespace TrafficVolume
             Vehicle vehicle = vehicleManager.m_vehicles.m_buffer[index];
             VehicleInfo vehicleInfo = vehicle.Info;
 
+            if (vehicleInfo == null)
+            {
+                Manager.Log.WriteInfo("IsVehicleOnSegment: VehicleInfo is null!");
+                return false;
+            }
+            
             int pathPositionIndex = vehicle.m_pathPositionIndex;
             int startPositionIndex = pathPositionIndex != byte.MaxValue ? pathPositionIndex >> 1 : 0;
 
@@ -43,6 +49,12 @@ namespace TrafficVolume
                         if (segment.m_modifiedIndex < pathUnit.m_buildIndex)
                         {
                             NetInfo netInfo = netManager.m_segments.m_buffer[position.m_segment].Info;
+
+                            if (netInfo == null)
+                            {
+                                Manager.Log.WriteInfo("IsVehicleOnSegment: NetInfo is null!");
+                                return false;
+                            }
 
                             var hasLanes = netInfo.m_lanes != null;
 
@@ -78,8 +90,11 @@ namespace TrafficVolume
 
                 if (++safetyCounter >= 262144)
                 {
-                    CODebugBase<LogChannel>.Error(LogChannel.Core,
-                        "Invalid list detected!\n" + System.Environment.StackTrace);
+                    // CODebugBase<LogChannel>.Error(LogChannel.Core,
+                    //     "Invalid list detected!\n" + System.Environment.StackTrace);
+                    
+                    Manager.Log.WriteInfo("Invalid list detected!\n" + System.Environment.StackTrace);
+                    
                     break;
                 }
             }

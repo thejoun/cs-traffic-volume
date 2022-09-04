@@ -10,7 +10,7 @@ namespace TrafficVolume.Patches
         {
             if (min == 0 && max == 256)
             {
-                LocalTraffic.CountVolume(___m_targets);
+                LocalTraffic.CountLocalVolume(___m_targets);
                 
                 // Manager.Log.WriteInfo("prefix");
                 // LocalTraffic.BeginCounting();

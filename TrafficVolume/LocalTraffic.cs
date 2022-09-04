@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using ColossalFramework;
 
 namespace TrafficVolume
@@ -14,7 +16,7 @@ namespace TrafficVolume
         private static DistrictManager _districtManager;
         private static PathManager _pathManager;
 
-        public static void CountVolume(HashSet<InstanceID> targets)
+        public static void CountLocalVolume(HashSet<InstanceID> targets)
         {
             _vehicleManager = Singleton<VehicleManager>.instance;
             _citizenManager = Singleton<CitizenManager>.instance;
@@ -23,6 +25,42 @@ namespace TrafficVolume
             _districtManager = Singleton<DistrictManager>.instance;
             _pathManager = Singleton<PathManager>.instance;
 
+            if (targets == null)
+            {
+                Manager.Log.WriteInfo("CountLocalVolume: targets hash set is null!");
+                return;
+            }
+            
+            if (_pathManager == null)
+            {
+                Manager.Log.WriteInfo("CountLocalVolume: path manager is null!");
+                return;
+            }
+            
+            if (_netManager == null)
+            {
+                Manager.Log.WriteInfo("CountLocalVolume: net manager is null!");
+                return;
+            }
+            
+            if (_buildingManager == null)
+            {
+                Manager.Log.WriteInfo("CountLocalVolume: building manager is null!");
+                return;
+            }
+            
+            if (_districtManager == null)
+            {
+                Manager.Log.WriteInfo("CountLocalVolume: district manager is null!");
+                return;
+            }
+            
+            if (_vehicleManager == null)
+            {
+                Manager.Log.WriteInfo("CountLocalVolume: vehicle manager is null!");
+                return;
+            }
+            
             Volume.Clear();
             
             for (int vehicleID = 0; vehicleID < Manager.VehicleMaxIndex; ++vehicleID)
@@ -51,10 +89,11 @@ namespace TrafficVolume
             
             // Manager.LocalVolumeGUI.Open();
             
-            Display();
+            DisplayText();
+            DisplayChart();
         }
 
-        private static void Display()
+        private static void DisplayText()
         {
             foreach (var kvp in Volume.Dict)
             {
@@ -66,6 +105,16 @@ namespace TrafficVolume
 
                 checkBox.text = $"{count} {transportName}";
             }
+        }
+
+        private static void DisplayChart()
+        {
+            var countDict = Volume.Dict;
+            var counts = countDict.Values.ToArray();
+            var sum = counts.Sum(c => c);
+            var percentages = counts.Select(c => 1f * c / sum).ToArray();
+
+            Manager.Chart.SetValues(percentages);
         }
         
         // public static void RegisterInstance(InstanceID instanceID)
