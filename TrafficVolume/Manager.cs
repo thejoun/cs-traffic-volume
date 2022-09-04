@@ -30,8 +30,6 @@ namespace TrafficVolume
 
         public static UIRadialChart Chart { get; private set; }
         
-        public static LocalVolumeGUI LocalVolumeGUI => _localVolumeGUI;
-        
         private static TrafficRoutesInfoViewPanel RoutesPanel => TrafficRoutesInfoViewPanel.instance;
         
         public static void OnModEnabled()
@@ -52,7 +50,10 @@ namespace TrafficVolume
 
         private static void OnUnityUpdate()
         {
-            
+            if (Input.GetKey(KeyCode.H) && Input.GetKeyDown(KeyCode.D))
+            {
+                UnityDump.DumpHierarchy();
+            }   
         }
         
         public static void OnSimulationUpdate(float realTimeDelta, float simulationTimeDelta)

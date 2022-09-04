@@ -8,12 +8,12 @@ namespace TrafficVolume
 {
     public static class UnityDump
     {
-        private static string DumpDirectory = "/jonu";
+        private static string DumpDirectory = "/dump";
         private static string DumpFile = "/hierarchy-dump.txt";
 
-        private static readonly List<string> m_excludedComponents = new List<string>()
+        private static readonly List<string> m_excluded = new List<string>()
         {
-            "GameObject", "Transform", "RectTransform"
+            "GameObject", "Transform"
         };
 
         public static void ShowSceneNames()
@@ -73,7 +73,7 @@ namespace TrafficVolume
         {
             var components = tr.gameObject.GetComponents<Component>();
             var componentNames = components.Select(c => c.GetType().Name);
-            componentNames = componentNames.Except(m_excludedComponents);
+            componentNames = componentNames.Except(m_excluded);
             var componentsText = string.Join(", ", componentNames.ToArray());
 
             writer.WriteLine(linePrefix + tr.name + " : " + componentsText);
