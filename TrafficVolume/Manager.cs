@@ -14,7 +14,7 @@ namespace TrafficVolume
 {
     public static class Manager
     {
-        private const string HarmonyModID = "com.jonu.trafficvolume";
+        private const string HarmonyModID = "trafficvolume";
         
         public const int VehicleMaxIndex = 256 * 64;
         public const int CitizenMaxIndex = 256 * 256;
@@ -31,9 +31,9 @@ namespace TrafficVolume
         public static Dictionary<Transport, string> TransportNameDict { get; set; } 
             = new Dictionary<Transport, string>();
 
-        public static UIRadialChart Chart { get; private set; }
+        // public static UIRadialChart Chart { get; private set; }
         
-        private static TrafficRoutesInfoViewPanel RoutesPanel => TrafficRoutesInfoViewPanel.instance;
+        // private static TrafficRoutesInfoViewPanel RoutesPanel => TrafficRoutesInfoViewPanel.instance;
         
         public static void OnModEnabled()
         {
@@ -54,15 +54,15 @@ namespace TrafficVolume
 
         private static void OnUnityUpdate()
         {
-            if (Input.GetKey(KeyCode.H) && Input.GetKeyDown(KeyCode.D))
-            {
-                UnityDump.DumpHierarchy();
-            }
-            
-            if (Input.GetKey(KeyCode.T) && Input.GetKeyDown(KeyCode.C))
-            {
-                CreateChart();
-            }
+            // if (Input.GetKey(KeyCode.H) && Input.GetKeyDown(KeyCode.D))
+            // {
+            //     UnityDump.DumpHierarchy();
+            // }
+            //
+            // if (Input.GetKey(KeyCode.T) && Input.GetKeyDown(KeyCode.C))
+            // {
+            //     CreateChart();
+            // }
         }
         
         public static void OnSimulationUpdate(float realTimeDelta, float simulationTimeDelta)
@@ -70,68 +70,68 @@ namespace TrafficVolume
             
         }
 
-        private static void CreateChart()
-        {
-            // does not work (yet)
-            
-            var routesPanel = RoutesPanel;
-
-            if (routesPanel == null)
-            {
-                Log.WriteInfo("Routes panel is null");
-                return;
-            }
-            
-            var subComponent = routesPanel.Find("ShowTransportTypes");
-            
-            if (subComponent == null)
-            {
-                Log.WriteInfo("Sub component is null");
-                return;
-            }
-
-            Chart = subComponent.AddUIComponent<UIRadialChart>();
-
-            Chart.gameObject.name = "TrafficVolumePieChart";
-            
-            // var chartGo = new GameObject("PieChart");
-            // chartGo.transform.parent = subComponent.transform;
-            // chartGo.transform.localPosition = Vector2.zero;
-            //
-            // Chart = chartGo.AddComponent<UIRadialChart>();
-
-            var types = (Transport[])Enum.GetValues(typeof(Transport));
-            var typeCount = types.Length;
-
-            for (int i = 0; i < typeCount; i++)
-            {
-                Chart.AddSlice();
-
-                var slice = Chart.GetSlice(i);
-
-                if (slice == null)
-                {
-                    Log.WriteInfo($"Slice {i} is null");
-                    return;
-                }
-                
-                // todo actual transport type colors
-                
-                var r = Random.Range(0f, 1f);
-                var g = Random.Range(0f, 1f);
-                var b = Random.Range(0f, 1f);
-
-                slice.innerColor = new Color(r, g, b);
-                
-                var r2 = Random.Range(0f, 1f);
-                var g2 = Random.Range(0f, 1f);
-                var b2 = Random.Range(0f, 1f);
-
-                slice.outterColor = new Color(r2, g2, b2);
-            }
-            
-            Log.WriteInfo("Chart created");
-        }
+        // private static void CreateChart()
+        // {
+        //     // does not work (yet)
+        //     
+        //     var routesPanel = RoutesPanel;
+        //
+        //     if (routesPanel == null)
+        //     {
+        //         Log.WriteInfo("Routes panel is null");
+        //         return;
+        //     }
+        //     
+        //     var subComponent = routesPanel.Find("ShowTransportTypes");
+        //     
+        //     if (subComponent == null)
+        //     {
+        //         Log.WriteInfo("Sub component is null");
+        //         return;
+        //     }
+        //
+        //     Chart = subComponent.AddUIComponent<UIRadialChart>();
+        //
+        //     Chart.gameObject.name = "TrafficVolumePieChart";
+        //     
+        //     // var chartGo = new GameObject("PieChart");
+        //     // chartGo.transform.parent = subComponent.transform;
+        //     // chartGo.transform.localPosition = Vector2.zero;
+        //     //
+        //     // Chart = chartGo.AddComponent<UIRadialChart>();
+        //
+        //     var types = (Transport[])Enum.GetValues(typeof(Transport));
+        //     var typeCount = types.Length;
+        //
+        //     for (int i = 0; i < typeCount; i++)
+        //     {
+        //         Chart.AddSlice();
+        //
+        //         var slice = Chart.GetSlice(i);
+        //
+        //         if (slice == null)
+        //         {
+        //             Log.WriteInfo($"Slice {i} is null");
+        //             return;
+        //         }
+        //         
+        //         // todo actual transport type colors
+        //         
+        //         var r = Random.Range(0f, 1f);
+        //         var g = Random.Range(0f, 1f);
+        //         var b = Random.Range(0f, 1f);
+        //
+        //         slice.innerColor = new Color(r, g, b);
+        //         
+        //         var r2 = Random.Range(0f, 1f);
+        //         var g2 = Random.Range(0f, 1f);
+        //         var b2 = Random.Range(0f, 1f);
+        //
+        //         slice.outterColor = new Color(r2, g2, b2);
+        //     }
+        //     
+        //     Log.WriteInfo("Chart created");
+        // }
 
         private static void AttachHarmony()
         {
@@ -173,7 +173,7 @@ namespace TrafficVolume
                 Object.DontDestroyOnLoad(go);
             }
             
-            Log.WriteInfo($"{typeName} instantiated");
+            // Log.WriteInfo($"{typeName} instantiated");
 
             return component;
         }

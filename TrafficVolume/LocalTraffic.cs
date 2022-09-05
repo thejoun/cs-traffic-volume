@@ -61,6 +61,12 @@ namespace TrafficVolume
                 return;
             }
             
+            if (_citizenManager == null)
+            {
+                Manager.Log.WriteInfo("CountLocalVolume: citizen manager is null!");
+                return;
+            }
+            
             Volume.Clear();
             
             for (int vehicleID = 0; vehicleID < Manager.VehicleMaxIndex; ++vehicleID)
@@ -90,32 +96,48 @@ namespace TrafficVolume
             // Manager.LocalVolumeGUI.Open();
             
             DisplayText();
-            DisplayChart();
+            // DisplayChart();
         }
 
         private static void DisplayText()
         {
+            var checkBoxDict = Manager.CheckBoxDict;
+
+            if (checkBoxDict == null)
+            {
+                Manager.Log.WriteInfo("Checkbox dict is null!");
+                return;
+            }
+
+            var transportNameDict = Manager.TransportNameDict;
+            
+            if (transportNameDict == null)
+            {
+                Manager.Log.WriteInfo("Transport name dict is null!");
+                return;
+            }
+            
             foreach (var kvp in Volume.Dict)
             {
                 var transport = kvp.Key;
                 var count = kvp.Value;
-
-                var checkBox = Manager.CheckBoxDict[transport];
-                var transportName = Manager.TransportNameDict[transport];
+                
+                var checkBox = checkBoxDict[transport];
+                var transportName = transportNameDict[transport];
 
                 checkBox.text = $"{count} {transportName}";
             }
         }
 
-        private static void DisplayChart()
-        {
-            var countDict = Volume.Dict;
-            var counts = countDict.Values.ToArray();
-            var sum = counts.Sum(c => c);
-            var percentages = counts.Select(c => 1f * c / sum).ToArray();
-
-            Manager.Chart.SetValues(percentages);
-        }
+        // private static void DisplayChart()
+        // {
+        //     var countDict = Volume.Dict;
+        //     var counts = countDict.Values.ToArray();
+        //     var sum = counts.Sum(c => c);
+        //     var percentages = counts.Select(c => 1f * c / sum).ToArray();
+        //
+        //     Manager.Chart.SetValues(percentages);
+        // }
         
         // public static void RegisterInstance(InstanceID instanceID)
         // {

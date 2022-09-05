@@ -6,7 +6,7 @@ namespace TrafficVolume.GUI
     public class LocalVolumeGUI : UniversalGUI
     {
         protected override Rect Rect { get; set; } = new Rect(50, Screen.height - 400, 150, 200);
-        protected override IEnumerable<KeyCode> EnableKeyCombination => new List<KeyCode>();
+        protected override IEnumerable<KeyCode> EnableKeyCombination => new List<KeyCode>() {/*KeyCode.LeftAlt, KeyCode.L*/};
 
         private string _dump;
 

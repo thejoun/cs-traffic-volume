@@ -14,7 +14,7 @@ namespace TrafficVolume
         public uint cityServiceVehicleCount = 0;
         public uint publicTransportVehicleCount = 0;
 
-        public Dictionary<Transport, uint> Dict { get; private set; }
+        public Dictionary<Transport, uint> Dict { get; private set; } = new Dictionary<Transport, uint>();
 
         public void Clear()
         {
@@ -77,7 +77,32 @@ namespace TrafficVolume
             }
         }
 
-        public void AddVehicle(Vehicle vehicle)
+        public bool TryGetTransportType(Vehicle vehicle, out Transport transport)
+        {
+            var vehicleInfo = vehicle.Info;
+            var service = vehicleInfo.m_class.m_service;
+
+            switch (service)
+            {
+                case ItemClass.Service.Residential:
+                    transport = Transport.Private;
+                    return true;
+                case ItemClass.Service.Industrial:
+                    transport = Transport.Truck;
+                    return true;
+                case ItemClass.Service.PublicTransport:
+                    transport = Transport.Public;
+                    return true;
+                case ItemClass.Service.Fishing:
+                    transport = default;
+                    return false;
+                default:
+                    transport = Transport.Service;
+                    return true;
+            }
+        }
+
+        private void AddVehicle(Vehicle vehicle)
         {
             VehicleInfo vehicleInfo = vehicle.Info;
 
@@ -131,7 +156,7 @@ namespace TrafficVolume
             }
         }
 
-        public void AddCitizen(CitizenInstance citizen, CitizenManager citizenManager,
+        private void AddCitizen(CitizenInstance citizen, CitizenManager citizenManager,
             VehicleManager vehicleManager)
         {
             VehicleInfo.VehicleType vehicleType = VehicleInfo.VehicleType.None;
