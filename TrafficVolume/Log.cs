@@ -17,7 +17,8 @@ namespace TrafficVolume
         public void WriteInfo(string text)
         {
             Debug.Log(_prefix + text);
-            DebugOutputPanel.AddMessage(Info,_prefix + text);
+            
+            // DebugOutputPanel.AddMessage(Info,_prefix + text);
         }
     }
 }

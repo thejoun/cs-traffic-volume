@@ -11,19 +11,7 @@ namespace TrafficVolume.Patches
             if (min == 0 && max == 256)
             {
                 LocalTraffic.CountLocalVolume(___m_targets);
-                
-                // Manager.Log.WriteInfo("prefix");
-                // LocalTraffic.BeginCounting();
             }
         }
-
-        // public static void Postfix(int min, int max)
-        // {
-        //     if (min == 0 && max == 256)
-        //     {
-        //         Manager.Log.WriteInfo("postfix");
-        //         LocalTraffic.FinishCounting();
-        //     }
-        // }
     }
 }

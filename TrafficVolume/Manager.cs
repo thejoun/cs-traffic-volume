@@ -1,12 +1,8 @@
-using System;
 using System.Collections.Generic;
 using ColossalFramework.UI;
 using HarmonyLib;
 using ICities;
 using TrafficVolume.GUI;
-using UnityEngine;
-using Object = UnityEngine.Object;
-using Random = UnityEngine.Random;
 
 #pragma warning disable 0649
 
@@ -15,41 +11,47 @@ namespace TrafficVolume
     public static class Manager
     {
         private const string HarmonyModID = "trafficvolume";
+
+        public const string VersionId = "6 Sep";
         
         public const int VehicleMaxIndex = 256 * 64;
         public const int CitizenMaxIndex = 256 * 256;
 
-        public static Log Log { get; private set; }
+        private static Log _log;
+        
+        public static Log Log => _log ?? (_log = new Log(HarmonyModID));
 
-        private static UnityHook _unityHook;
         private static GlobalVolumeGUI _globalVolumeGUI;
         private static LocalVolumeGUI _localVolumeGUI;
-        
+
+        // private static UnityHook _unityHook;
+
         public static Dictionary<Transport, UICheckBox> CheckBoxDict { get; set; } 
             = new Dictionary<Transport, UICheckBox>();
         
         public static Dictionary<Transport, string> TransportNameDict { get; set; } 
             = new Dictionary<Transport, string>();
 
-        // public static UIRadialChart Chart { get; private set; }
+        // public static UIRadialChart TrafficChart { get; private set; }
+        // public static UICheckBox OverlayCheckBox { get; private set; }
         
         // private static TrafficRoutesInfoViewPanel RoutesPanel => TrafficRoutesInfoViewPanel.instance;
+        // private static UIComponent TrafficPanel => RoutesPanel.Find("ShowTransportTypes");
         
         public static void OnModEnabled()
         {
-            Log = new Log(HarmonyModID);
-            
             AttachHarmony();
-            // CreateChart();
         }
 
         public static void OnLevelLoaded(LoadMode mode)
         {
-            InstantiateSingle(ref _unityHook);
-            _unityHook.UnityUpdate += OnUnityUpdate;
-            
-            InstantiateSingle(ref _globalVolumeGUI);
-            InstantiateSingle(ref _localVolumeGUI);
+            UnityHelper.InstantiateSingle(ref _globalVolumeGUI);
+            UnityHelper.InstantiateSingle(ref _localVolumeGUI);
+
+            // UnityHelper.InstantiateSingle(ref _unityHook);
+            // _unityHook.UnityUpdate += OnUnityUpdate;
+
+            // CreateOverlayCheckbox();
         }
 
         private static void OnUnityUpdate()
@@ -58,8 +60,13 @@ namespace TrafficVolume
             // {
             //     UnityDump.DumpHierarchy();
             // }
-            //
-            // if (Input.GetKey(KeyCode.T) && Input.GetKeyDown(KeyCode.C))
+            
+            // if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.L))
+            // {
+            //     CreateOverlayCheckbox();
+            // }
+            
+            // if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.P))
             // {
             //     CreateChart();
             // }
@@ -69,6 +76,39 @@ namespace TrafficVolume
         {
             
         }
+        
+        private static void AttachHarmony()
+        {
+            // Harmony.DEBUG = true;
+            
+            // Log.WriteInfo("Creating Harmony...");
+            
+            var harmony = new Harmony(HarmonyModID);
+
+            // Log.WriteInfo("Patching...");
+            
+            harmony.PatchAll();
+
+            // Log.WriteInfo("Patched.");
+        }
+
+        // private static void CreateOverlayCheckbox()
+        // {
+        //     var parent = TrafficPanel;
+        //
+        //     parent.size = parent.size + new Vector2(0, 20);
+        //     
+        //     var checkbox = UIUtils.CreateCheckBox(parent);
+        //
+        //     checkbox.isChecked = true;
+        //
+        //     checkbox.eventCheckChanged += OnCheckChanged;
+        // }
+
+        // private static void OnCheckChanged(UIComponent ui, bool check)
+        // {
+        //     Log.WriteInfo($"Check: {check}");
+        // }
 
         // private static void CreateChart()
         // {
@@ -89,10 +129,10 @@ namespace TrafficVolume
         //         Log.WriteInfo("Sub component is null");
         //         return;
         //     }
+        //     
+        //     var chart = subComponent.AddUIComponent<UIRadialChart>();
         //
-        //     Chart = subComponent.AddUIComponent<UIRadialChart>();
-        //
-        //     Chart.gameObject.name = "TrafficVolumePieChart";
+        //     chart.gameObject.name = "TrafficVolumePieChart";
         //     
         //     // var chartGo = new GameObject("PieChart");
         //     // chartGo.transform.parent = subComponent.transform;
@@ -105,9 +145,9 @@ namespace TrafficVolume
         //
         //     for (int i = 0; i < typeCount; i++)
         //     {
-        //         Chart.AddSlice();
+        //         chart.AddSlice();
         //
-        //         var slice = Chart.GetSlice(i);
+        //         var slice = TrafficChart.GetSlice(i);
         //
         //         if (slice == null)
         //         {
@@ -129,53 +169,10 @@ namespace TrafficVolume
         //
         //         slice.outterColor = new Color(r2, g2, b2);
         //     }
+        //
+        //     TrafficChart = chart;
         //     
         //     Log.WriteInfo("Chart created");
         // }
-
-        private static void AttachHarmony()
-        {
-            // Harmony.DEBUG = true;
-            
-            // Log.WriteInfo("Creating Harmony...");
-            
-            var harmony = new Harmony(HarmonyModID);
-
-            // Log.WriteInfo("Patching...");
-            
-            harmony.PatchAll();
-
-            // Log.WriteInfo("Patched.");
-        }
-
-        private static void InstantiateSingle<T>(ref T component, bool dontDestroy = false)
-            where T : Component
-        {
-            if (component)
-            {
-                return;
-            }
-
-            component = Instantiate<T>(dontDestroy);
-        }
-
-        private static T Instantiate<T>(bool dontDestroy = false)
-            where T : Component
-        {
-            var typeName = typeof(T).Name;
-
-            var go = Object.Instantiate(new GameObject());
-            go.name = typeName;
-            var component = go.AddComponent<T>();
-
-            if (dontDestroy)
-            {
-                Object.DontDestroyOnLoad(go);
-            }
-            
-            // Log.WriteInfo($"{typeName} instantiated");
-
-            return component;
-        }
     }
 }

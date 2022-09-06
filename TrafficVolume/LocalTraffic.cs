@@ -1,13 +1,11 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using ColossalFramework;
 
 namespace TrafficVolume
 {
     public static class LocalTraffic
     {
-        public static readonly Volume Volume = new Volume();
+        public static Volume Volume = new Volume();
         
         private static VehicleManager _vehicleManager;
         private static CitizenManager _citizenManager;
@@ -18,55 +16,64 @@ namespace TrafficVolume
 
         public static void CountLocalVolume(HashSet<InstanceID> targets)
         {
+            // Manager.Log.WriteInfo("Count local volume");
+
+            if (Volume == null)
+            {
+                Manager.Log.WriteInfo("Local volume is null. Creating a new one");
+
+                Volume = new Volume();
+            }
+            
             _vehicleManager = Singleton<VehicleManager>.instance;
             _citizenManager = Singleton<CitizenManager>.instance;
             _netManager = Singleton<NetManager>.instance;
+            _pathManager = Singleton<PathManager>.instance;
             _buildingManager = Singleton<BuildingManager>.instance;
             _districtManager = Singleton<DistrictManager>.instance;
-            _pathManager = Singleton<PathManager>.instance;
 
             if (targets == null)
             {
-                Manager.Log.WriteInfo("CountLocalVolume: targets hash set is null!");
+                Manager.Log.WriteInfo("CountLocalVolume: targets hash set is null");
                 return;
             }
-            
-            if (_pathManager == null)
-            {
-                Manager.Log.WriteInfo("CountLocalVolume: path manager is null!");
-                return;
-            }
-            
-            if (_netManager == null)
-            {
-                Manager.Log.WriteInfo("CountLocalVolume: net manager is null!");
-                return;
-            }
-            
-            if (_buildingManager == null)
-            {
-                Manager.Log.WriteInfo("CountLocalVolume: building manager is null!");
-                return;
-            }
-            
-            if (_districtManager == null)
-            {
-                Manager.Log.WriteInfo("CountLocalVolume: district manager is null!");
-                return;
-            }
-            
+
             if (_vehicleManager == null)
             {
-                Manager.Log.WriteInfo("CountLocalVolume: vehicle manager is null!");
+                Manager.Log.WriteInfo("CountLocalVolume: vehicle manager is null");
                 return;
             }
-            
+
             if (_citizenManager == null)
             {
-                Manager.Log.WriteInfo("CountLocalVolume: citizen manager is null!");
+                Manager.Log.WriteInfo("CountLocalVolume: citizen manager is null");
                 return;
             }
-            
+
+            if (_netManager == null)
+            {
+                Manager.Log.WriteInfo("CountLocalVolume: net manager is null");
+                return;
+            }
+
+            if (_pathManager == null)
+            {
+                Manager.Log.WriteInfo("CountLocalVolume: path manager is null");
+                return;
+            }
+
+            if (_buildingManager == null)
+            {
+                Manager.Log.WriteInfo("CountLocalVolume: building manager is null");
+                return;
+            }
+
+            if (_districtManager == null)
+            {
+                Manager.Log.WriteInfo("CountLocalVolume: district manager is null");
+                return;
+            }
+
             Volume.Clear();
             
             for (int vehicleID = 0; vehicleID < Manager.VehicleMaxIndex; ++vehicleID)
@@ -96,6 +103,7 @@ namespace TrafficVolume
             // Manager.LocalVolumeGUI.Open();
             
             DisplayText();
+            
             // DisplayChart();
         }
 
@@ -105,7 +113,7 @@ namespace TrafficVolume
 
             if (checkBoxDict == null)
             {
-                Manager.Log.WriteInfo("Checkbox dict is null!");
+                Manager.Log.WriteInfo("Checkbox dict is null");
                 return;
             }
 
@@ -113,7 +121,13 @@ namespace TrafficVolume
             
             if (transportNameDict == null)
             {
-                Manager.Log.WriteInfo("Transport name dict is null!");
+                Manager.Log.WriteInfo("Transport name dict is null");
+                return;
+            }
+
+            if (Volume == null)
+            {
+                Manager.Log.WriteInfo("Local Volume is null");
                 return;
             }
             
@@ -121,11 +135,34 @@ namespace TrafficVolume
             {
                 var transport = kvp.Key;
                 var count = kvp.Value;
-                
-                var checkBox = checkBoxDict[transport];
-                var transportName = transportNameDict[transport];
 
-                checkBox.text = $"{count} {transportName}";
+                if (checkBoxDict.TryGetValue(transport, out var checkBox))
+                {
+                    if (!checkBox)
+                    {
+                        Manager.Log.WriteInfo("Checkbox is null");
+                        continue;
+                    }
+                    
+                    if (transportNameDict.TryGetValue(transport, out var title))
+                    {
+                        var text = $"{count} {title}";
+                        
+                        // Manager.Log.WriteInfo($"Displaying text {text}");
+
+                        checkBox.text = text;
+                    }
+                    else
+                    {
+                        Manager.Log.WriteInfo($"No title for {transport} in dict");
+                        continue;
+                    }
+                }
+                else
+                {
+                    Manager.Log.WriteInfo($"No checkbox for {transport} in dict");
+                    continue;
+                }
             }
         }
 
@@ -137,27 +174,6 @@ namespace TrafficVolume
         //     var percentages = counts.Select(c => 1f * c / sum).ToArray();
         //
         //     Manager.Chart.SetValues(percentages);
-        // }
-        
-        // public static void RegisterInstance(InstanceID instanceID)
-        // {
-        //     if (!_isCounting) return;
-        //
-        //     var vehicleId = instanceID.Vehicle;
-        //     var citizenId = instanceID.CitizenInstance;
-        //
-        //     var isCitizen = citizenId != 0;
-        //     var isVehicle = !isCitizen && vehicleId != 0;
-        //
-        //     if (isCitizen)
-        //     {
-        //         Volume.AddCitizen(citizenId, _vehicleManager, _citizenManager);
-        //     }
-        //
-        //     if (isVehicle)
-        //     {
-        //         Volume.AddVehicle(vehicleId, _vehicleManager);
-        //     }
         // }
     }
 }

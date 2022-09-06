@@ -11,15 +11,8 @@ namespace TrafficVolume
             NetManager netManager, BuildingManager buildingManager, DistrictManager districtManager,
             VehicleManager vehicleManager)
         {
-            Vehicle vehicle = vehicleManager.m_vehicles.m_buffer[index];
-            VehicleInfo vehicleInfo = vehicle.Info;
+            Vehicle vehicle = vehicleManager.m_vehicles?.m_buffer?[index] ?? default;
 
-            if (vehicleInfo == null)
-            {
-                Manager.Log.WriteInfo("IsVehicleOnSegment: VehicleInfo is null!");
-                return false;
-            }
-            
             int pathPositionIndex = vehicle.m_pathPositionIndex;
             int startPositionIndex = pathPositionIndex != byte.MaxValue ? pathPositionIndex >> 1 : 0;
 
@@ -32,7 +25,7 @@ namespace TrafficVolume
 
             while (pathUnitID != 0U && !flag1 && !flag2)
             {
-                PathUnit pathUnit = pathManager.m_pathUnits.m_buffer[(uint) (IntPtr) pathUnitID];
+                PathUnit pathUnit = pathManager.m_pathUnits?.m_buffer?[(uint) (IntPtr) pathUnitID] ?? default;
 
                 int positionCount = pathUnit.m_positionCount;
 
@@ -44,15 +37,15 @@ namespace TrafficVolume
 
                     if (targets.Contains(segmentInstance))
                     {
-                        NetSegment segment = netManager.m_segments.m_buffer[position.m_segment];
+                        NetSegment segment = netManager.m_segments?.m_buffer?[position.m_segment] ?? default;
 
                         if (segment.m_modifiedIndex < pathUnit.m_buildIndex)
                         {
-                            NetInfo netInfo = netManager.m_segments.m_buffer[position.m_segment].Info;
+                            NetInfo netInfo = segment.Info;
 
                             if (netInfo == null)
                             {
-                                Manager.Log.WriteInfo("IsVehicleOnSegment: NetInfo is null!");
+                                Manager.Log.WriteInfo("IsVehicleOnSegment: NetInfo is null");
                                 return false;
                             }
 
@@ -66,6 +59,12 @@ namespace TrafficVolume
                                 {
                                     var lane = netInfo.m_lanes[position.m_lane];
 
+                                    if (lane == null)
+                                    {
+                                        Manager.Log.WriteInfo("Lane is null");
+                                        return false;
+                                    }
+                                    
                                     var isVehicleLane = (lane.m_laneType &
                                                          (NetInfo.LaneType.Vehicle | NetInfo.LaneType.TransportVehicle))
                                                         != NetInfo.LaneType.None;
@@ -93,13 +92,30 @@ namespace TrafficVolume
                     // CODebugBase<LogChannel>.Error(LogChannel.Core,
                     //     "Invalid list detected!\n" + System.Environment.StackTrace);
                     
-                    Manager.Log.WriteInfo("Invalid list detected!\n" + System.Environment.StackTrace);
+                    Manager.Log.WriteInfo("Invalid list detected\n" + System.Environment.StackTrace);
                     
                     break;
                 }
             }
 
-            InstanceID targetId = vehicleInfo.m_vehicleAI.GetTargetID((ushort) index, ref vehicle);
+            VehicleInfo vehicleInfo = vehicle.Info;
+
+            // important catch!
+            if (vehicleInfo == null)
+            {
+                // Manager.Log.WriteInfo("IsVehicleOnSegment: VehicleInfo is null");
+                return flag1;
+            }
+
+            var vehicleAI = vehicleInfo.m_vehicleAI;
+
+            if (!vehicleAI)
+            {
+                Manager.Log.WriteInfo("VehicleAI is null");
+                return flag1;
+            }
+            
+            InstanceID targetId = vehicleAI.GetTargetID((ushort) index, ref vehicle);
 
             bool flag3 = flag1 | targets.Contains(targetId);
 
@@ -108,8 +124,10 @@ namespace TrafficVolume
 
             if (targetIsBuilding)
             {
-                Vector3 position = buildingManager.m_buildings.m_buffer[targetId.Building].m_position;
-                InstanceID empty = InstanceID.Empty;
+                var building = buildingManager.m_buildings?.m_buffer?[targetId.Building] ?? default;
+                var position = building.m_position;
+                
+                var empty = InstanceID.Empty;
                 empty.District = districtManager.GetDistrict(position);
                 bool flag4 = flag3 | targets.Contains(empty);
                 empty.Park = districtManager.GetPark(position);
@@ -118,8 +136,10 @@ namespace TrafficVolume
 
             if (targetIsNetNode)
             {
-                Vector3 position = netManager.m_nodes.m_buffer[targetId.NetNode].m_position;
-                InstanceID empty = InstanceID.Empty;
+                var netNode = netManager.m_nodes?.m_buffer?[targetId.NetNode] ?? default;
+                var position = netNode.m_position;
+                
+                var empty = InstanceID.Empty;
                 empty.District = districtManager.GetDistrict(position);
                 bool flag4 = flag3 | targets.Contains(empty);
                 empty.Park = districtManager.GetPark(position);
@@ -137,35 +157,51 @@ namespace TrafficVolume
             // }
         }
 
-        public static bool IsCitizenOnSegment(int index1, HashSet<InstanceID> targets, PathManager instance1,
-            NetManager instance2, BuildingManager instance3, DistrictManager instance4,
-            CitizenManager instance6)
+        public static bool IsCitizenOnSegment(int index, HashSet<InstanceID> targets, PathManager pathManager,
+            NetManager netManager, BuildingManager buildingManager, DistrictManager districtManager,
+            CitizenManager citizenManager)
         {
             bool flag1 = false;
-            int pathPositionIndex = (int) instance6.m_instances.m_buffer[index1].m_pathPositionIndex;
-            int num1 = pathPositionIndex != (int) byte.MaxValue ? pathPositionIndex >> 1 : 0;
-            uint num2 = instance6.m_instances.m_buffer[index1].m_path;
-            bool flag2 = false;
+            
+            CitizenInstance citizenInstance = citizenManager.m_instances?.m_buffer?[index] ?? default;
+            
+            int pathPositionIndex = citizenInstance.m_pathPositionIndex;
+            
+            int num1 = pathPositionIndex != byte.MaxValue ? pathPositionIndex >> 1 : 0;
+            uint num2 = citizenInstance.m_path;
             int num3 = 0;
+
+            bool flag2 = false;
+
+
             while (num2 != 0U && !flag1 && !flag2)
             {
-                int positionCount = (int) instance1.m_pathUnits.m_buffer[(uint) (IntPtr) num2].m_positionCount;
+                var pathUnit = pathManager.m_pathUnits?.m_buffer?[(uint) (IntPtr) num2] ?? default;
+                int positionCount = pathUnit.m_positionCount;
+                
                 for (int index2 = num1; index2 < positionCount; ++index2)
                 {
-                    PathUnit.Position position =
-                        instance1.m_pathUnits.m_buffer[(uint) (IntPtr) num2].GetPosition(index2);
+                    PathUnit.Position position = pathUnit.GetPosition(index2);
+                    
                     InstanceID empty = InstanceID.Empty;
                     empty.NetSegment = position.m_segment;
+                    
                     if (targets.Contains(empty))
                     {
-                        if (instance2.m_segments.m_buffer[(int) position.m_segment].m_modifiedIndex <
-                            instance1.m_pathUnits.m_buffer[(uint) (IntPtr) num2].m_buildIndex)
+                        var netSegment = netManager.m_segments?.m_buffer?[position.m_segment] ?? default;
+                        
+                        if (netSegment.m_modifiedIndex < pathUnit.m_buildIndex)
                         {
-                            NetInfo info = instance2.m_segments.m_buffer[(int) position.m_segment].Info;
-                            if (info.m_lanes != null && (int) position.m_lane < info.m_lanes.Length &&
-                                (info.m_lanes[(int) position.m_lane].m_laneType == NetInfo.LaneType.Pedestrian ||
-                                 info.m_lanes[(int) position.m_lane].m_laneType == NetInfo.LaneType.Vehicle &&
-                                 info.m_lanes[(int) position.m_lane].m_vehicleType == VehicleInfo.VehicleType.Bicycle))
+                            NetInfo info = netSegment.Info;
+
+                            var hasLanes = info.m_lanes != null;
+                            var lane = position.m_lane;
+                            var mLane = hasLanes ? info.m_lanes[lane] : default;
+                            
+                            if (hasLanes && (int) lane < info.m_lanes.Length &&
+                                (mLane.m_laneType == NetInfo.LaneType.Pedestrian ||
+                                 mLane.m_laneType == NetInfo.LaneType.Vehicle &&
+                                 mLane.m_vehicleType == VehicleInfo.VehicleType.Bicycle))
                             {
                                 flag1 = true;
                                 break;
@@ -178,35 +214,51 @@ namespace TrafficVolume
                 }
 
                 num1 = 0;
-                num2 = instance1.m_pathUnits.m_buffer[(uint) (IntPtr) num2].m_nextPathUnit;
+                num2 = pathUnit.m_nextPathUnit;
                 if (++num3 >= 262144)
                 {
                     CODebugBase<LogChannel>.Error(LogChannel.Core,
-                        "Invalid list detected!\n" + System.Environment.StackTrace);
+                        "Invalid list detected\n" + System.Environment.StackTrace);
                     break;
                 }
             }
 
-            InstanceID targetId = instance6.m_instances.m_buffer[index1].Info.m_citizenAI
-                .GetTargetID((ushort) index1, ref instance6.m_instances.m_buffer[index1]);
+            var citizenInfo = citizenInstance.Info;
+
+            if (citizenInfo == null)
+            {
+                Manager.Log.WriteInfo("Citizen info is null");
+                return flag1;
+            }
+            
+            var citizenAI = citizenInfo.m_citizenAI;
+
+            if (!citizenAI)
+            {
+                Manager.Log.WriteInfo("Citizen AI is null");
+                return flag1;
+            }
+            
+            InstanceID targetId = citizenAI.GetTargetID((ushort) index, ref citizenManager.m_instances.m_buffer[index]);
+            
             bool flag3 = flag1 | targets.Contains(targetId);
             if (targetId.Building != (ushort) 0)
             {
-                Vector3 position = instance3.m_buildings.m_buffer[(int) targetId.Building].m_position;
+                Vector3 position = buildingManager.m_buildings.m_buffer[(int) targetId.Building].m_position;
                 InstanceID empty = InstanceID.Empty;
-                empty.District = instance4.GetDistrict(position);
+                empty.District = districtManager.GetDistrict(position);
                 bool flag4 = flag3 | targets.Contains(empty);
-                empty.Park = instance4.GetPark(position);
+                empty.Park = districtManager.GetPark(position);
                 flag3 = flag4 | targets.Contains(empty);
             }
 
             if (targetId.NetNode != (ushort) 0)
             {
-                Vector3 position = instance2.m_nodes.m_buffer[(int) targetId.NetNode].m_position;
+                Vector3 position = netManager.m_nodes.m_buffer[(int) targetId.NetNode].m_position;
                 InstanceID empty = InstanceID.Empty;
-                empty.District = instance4.GetDistrict(position);
+                empty.District = districtManager.GetDistrict(position);
                 bool flag4 = flag3 | targets.Contains(empty);
-                empty.Park = instance4.GetPark(position);
+                empty.Park = districtManager.GetPark(position);
                 flag3 = flag4 | targets.Contains(empty);
             }
 
