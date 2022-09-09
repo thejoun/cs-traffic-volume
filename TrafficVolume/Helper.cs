@@ -45,7 +45,7 @@ namespace TrafficVolume
 
                             if (netInfo == null)
                             {
-                                Manager.Log.WriteInfo("IsVehicleOnSegment: NetInfo is null");
+                                Manager.Log.WriteLog("IsVehicleOnSegment: NetInfo is null");
                                 return false;
                             }
 
@@ -61,7 +61,7 @@ namespace TrafficVolume
 
                                     if (lane == null)
                                     {
-                                        Manager.Log.WriteInfo("Lane is null");
+                                        Manager.Log.WriteLog("Lane is null");
                                         return false;
                                     }
                                     
@@ -92,7 +92,7 @@ namespace TrafficVolume
                     // CODebugBase<LogChannel>.Error(LogChannel.Core,
                     //     "Invalid list detected!\n" + System.Environment.StackTrace);
                     
-                    Manager.Log.WriteInfo("Invalid list detected\n" + System.Environment.StackTrace);
+                    Manager.Log.WriteLog("Invalid list detected\n" + System.Environment.StackTrace);
                     
                     break;
                 }
@@ -111,7 +111,7 @@ namespace TrafficVolume
 
             if (!vehicleAI)
             {
-                Manager.Log.WriteInfo("VehicleAI is null");
+                Manager.Log.WriteLog("VehicleAI is null");
                 return flag1;
             }
             
@@ -227,7 +227,7 @@ namespace TrafficVolume
 
             if (citizenInfo == null)
             {
-                Manager.Log.WriteInfo("Citizen info is null");
+                Manager.Log.WriteLog("Citizen info is null");
                 return flag1;
             }
             
@@ -235,7 +235,7 @@ namespace TrafficVolume
 
             if (!citizenAI)
             {
-                Manager.Log.WriteInfo("Citizen AI is null");
+                Manager.Log.WriteLog("Citizen AI is null");
                 return flag1;
             }
             

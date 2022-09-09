@@ -14,7 +14,20 @@ namespace TrafficVolume
             _prefix = $"[{modID}] ";
         }
         
-        public void WriteInfo(string text)
+        public void Write(string text)
+        {
+            WriteConsole(text);
+            WriteLog(text);
+        }
+        
+        public void WriteConsole(string text)
+        {
+            // Debug.Log(_prefix + text);
+            
+            DebugOutputPanel.AddMessage(Info,_prefix + text);
+        }
+        
+        public void WriteLog(string text)
         {
             Debug.Log(_prefix + text);
             

@@ -1,5 +1,8 @@
 using System.Collections.Generic;
+using System.Linq;
 using ColossalFramework;
+using ColossalFramework.UI;
+using UnityEngine;
 
 namespace TrafficVolume
 {
@@ -20,7 +23,7 @@ namespace TrafficVolume
 
             if (Volume == null)
             {
-                Manager.Log.WriteInfo("Local volume is null. Creating a new one");
+                Manager.Log.WriteLog("Local volume is null. Creating a new one");
 
                 Volume = new Volume();
             }
@@ -34,43 +37,43 @@ namespace TrafficVolume
 
             if (targets == null)
             {
-                Manager.Log.WriteInfo("CountLocalVolume: targets hash set is null");
+                Manager.Log.WriteLog("CountLocalVolume: targets hash set is null");
                 return;
             }
 
             if (_vehicleManager == null)
             {
-                Manager.Log.WriteInfo("CountLocalVolume: vehicle manager is null");
+                Manager.Log.WriteLog("CountLocalVolume: vehicle manager is null");
                 return;
             }
 
             if (_citizenManager == null)
             {
-                Manager.Log.WriteInfo("CountLocalVolume: citizen manager is null");
+                Manager.Log.WriteLog("CountLocalVolume: citizen manager is null");
                 return;
             }
 
             if (_netManager == null)
             {
-                Manager.Log.WriteInfo("CountLocalVolume: net manager is null");
+                Manager.Log.WriteLog("CountLocalVolume: net manager is null");
                 return;
             }
 
             if (_pathManager == null)
             {
-                Manager.Log.WriteInfo("CountLocalVolume: path manager is null");
+                Manager.Log.WriteLog("CountLocalVolume: path manager is null");
                 return;
             }
 
             if (_buildingManager == null)
             {
-                Manager.Log.WriteInfo("CountLocalVolume: building manager is null");
+                Manager.Log.WriteLog("CountLocalVolume: building manager is null");
                 return;
             }
 
             if (_districtManager == null)
             {
-                Manager.Log.WriteInfo("CountLocalVolume: district manager is null");
+                Manager.Log.WriteLog("CountLocalVolume: district manager is null");
                 return;
             }
 
@@ -103,34 +106,15 @@ namespace TrafficVolume
             // Manager.LocalVolumeGUI.Open();
             
             DisplayText();
-            
-            // DisplayChart();
+            DisplayChart();
         }
 
         private static void DisplayText()
         {
             var checkBoxDict = Manager.CheckBoxDict;
 
-            if (checkBoxDict == null)
-            {
-                Manager.Log.WriteInfo("Checkbox dict is null");
-                return;
-            }
-
             var transportNameDict = Manager.TransportNameDict;
-            
-            if (transportNameDict == null)
-            {
-                Manager.Log.WriteInfo("Transport name dict is null");
-                return;
-            }
 
-            if (Volume == null)
-            {
-                Manager.Log.WriteInfo("Local Volume is null");
-                return;
-            }
-            
             foreach (var kvp in Volume.Dict)
             {
                 var transport = kvp.Key;
@@ -138,42 +122,51 @@ namespace TrafficVolume
 
                 if (checkBoxDict.TryGetValue(transport, out var checkBox))
                 {
-                    if (!checkBox)
-                    {
-                        Manager.Log.WriteInfo("Checkbox is null");
-                        continue;
-                    }
-                    
                     if (transportNameDict.TryGetValue(transport, out var title))
                     {
                         var text = $"{count} {title}";
                         
-                        // Manager.Log.WriteInfo($"Displaying text {text}");
-
                         checkBox.text = text;
                     }
-                    else
-                    {
-                        Manager.Log.WriteInfo($"No title for {transport} in dict");
-                        continue;
-                    }
-                }
-                else
-                {
-                    Manager.Log.WriteInfo($"No checkbox for {transport} in dict");
-                    continue;
                 }
             }
         }
 
-        // private static void DisplayChart()
-        // {
-        //     var countDict = Volume.Dict;
-        //     var counts = countDict.Values.ToArray();
-        //     var sum = counts.Sum(c => c);
-        //     var percentages = counts.Select(c => 1f * c / sum).ToArray();
-        //
-        //     Manager.Chart.SetValues(percentages);
-        // }
+        private static void DisplayChart()
+        {
+            var countDict = Volume.Dict;
+            var counts = countDict.Values.ToArray();
+            
+            var sum = counts.Sum(c => c);
+            var percentages = counts.Select(c => 1f * c / sum).ToArray();
+            
+            var chart = Manager.Chart;
+            
+            chart.gameObject.SetActive(sum != 0);
+
+            if (sum == 0)
+            {
+                return;
+            }
+            
+            chart.transform.localPosition = Vector2.zero;
+            
+            var a = 0f;
+            for (int index = 0; index < chart.sliceCount; index++)
+            {
+                var percentage = percentages[index];
+                var slice = chart.GetSlice(index);
+
+                // ensures that no weird clamps are applied later
+                slice.startValue = 0f;
+                slice.endValue = 1f;
+                
+                slice.startValue = Mathf.Clamp(a, 0f, 1f);
+                slice.endValue = Mathf.Clamp(a + percentage, 0f, 1f);
+
+                a += percentage;
+            }
+            chart.Invalidate();
+        }
     }
 }

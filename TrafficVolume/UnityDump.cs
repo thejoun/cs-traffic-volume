@@ -30,7 +30,7 @@ namespace TrafficVolume
             var sceneNames = scenes.Select(scene => scene.name);
             var sceneNamesText = string.Join(",\n", sceneNames.ToArray());
 
-            Manager.Log.WriteInfo("Loaded scenes:\n" + sceneNamesText);
+            Manager.Log.WriteLog("Loaded scenes:\n" + sceneNamesText);
         }
 
         public static void DumpHierarchy()
@@ -66,7 +66,7 @@ namespace TrafficVolume
                 writer.WriteLine("\n");
             }
 
-            Manager.Log.WriteInfo("Hierarchy dumped: " + filePath);
+            Manager.Log.WriteLog("Hierarchy dumped: " + filePath);
         }
 
         public static void DumpTransform(Transform tr, string linePrefix, StreamWriter writer)
