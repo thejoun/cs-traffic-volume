@@ -16,7 +16,7 @@ namespace TrafficVolume.Patches
             UICheckBox ___m_TrucksCheckBox,
             UICheckBox ___m_CityServiceCheckBox)
         {
-            Manager.CheckBoxDict = new Dictionary<Transport, UICheckBox>()
+            UIManager.TransportCheckBoxes = new Dictionary<Transport, UICheckBox>()
             {
                 {Transport.Pedestrian, ___m_PedestrianCheckBox},
                 {Transport.Cyclist, ___m_CyclistCheckBox},
@@ -26,7 +26,7 @@ namespace TrafficVolume.Patches
                 {Transport.Service, ___m_CityServiceCheckBox}
             };
 
-            Manager.TransportNameDict = new Dictionary<Transport, string>()
+            UIManager.TransportLabels = new Dictionary<Transport, string>()
             {
                 {Transport.Pedestrian, ___m_PedestrianCheckBox.text},
                 {Transport.Cyclist, ___m_CyclistCheckBox.text},

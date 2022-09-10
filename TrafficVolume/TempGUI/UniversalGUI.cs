@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace TrafficVolume.GUI
+namespace TrafficVolume.TempGUI
 {
     public abstract class UniversalGUI : MonoBehaviour
     {

@@ -14,7 +14,15 @@ namespace TrafficVolume
         public uint cityServiceVehicleCount = 0;
         public uint publicTransportVehicleCount = 0;
 
-        public Dictionary<Transport, uint> Dict { get; private set; } = new Dictionary<Transport, uint>();
+        public Dictionary<Transport, uint> Dict => new Dictionary<Transport, uint>
+        {
+            {Transport.Pedestrian, pedestrianCount},
+            {Transport.Cyclist, bicycleCount},
+            {Transport.Private, residentialCount},
+            {Transport.Public, publicTransportVehicleCount},
+            {Transport.Truck, industrialCount},
+            {Transport.Service, postVehicleCount + cityServiceVehicleCount}
+        };
 
         public void Clear()
         {
@@ -39,19 +47,6 @@ namespace TrafficVolume
             builder.Append($"City service: {postVehicleCount + cityServiceVehicleCount}\n");
 
             return builder.ToString();
-        }
-
-        public void MakeDictionary()
-        {
-            Dict = new Dictionary<Transport, uint>
-            {
-                {Transport.Pedestrian, pedestrianCount},
-                {Transport.Cyclist, bicycleCount},
-                {Transport.Private, residentialCount},
-                {Transport.Public, publicTransportVehicleCount},
-                {Transport.Truck, industrialCount},
-                {Transport.Service, postVehicleCount + cityServiceVehicleCount}
-            };
         }
 
         public void AddVehicle(int index, VehicleManager vehicleManager)
