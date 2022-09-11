@@ -114,8 +114,7 @@ namespace TrafficVolume.UI
         
         public void DisplayVolume(Volume volume)
         {
-            var countDict = volume.Dict;
-            var counts = countDict.Values.ToArray();
+            var counts = volume.Values.ToArray();
             
             var sum = counts.Sum(c => c);
             var percentages = counts.Select(c => 1f * c / sum).ToArray();

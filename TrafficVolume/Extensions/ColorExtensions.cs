@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Template.Extensions
+namespace TrafficVolume.Extensions
 {
     public static class ColorExtensions
     {

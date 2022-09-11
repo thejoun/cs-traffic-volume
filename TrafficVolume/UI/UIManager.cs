@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using ColossalFramework;
 using ColossalFramework.UI;
-using Template.Extensions;
+using TrafficVolume.Extensions;
 using TrafficVolume.UI;
 using UnityEngine;
 
@@ -69,7 +69,7 @@ namespace TrafficVolume
             var checkBoxDict = TransportCheckBoxes;
             var transportNameDict = TransportLabels;
 
-            foreach (var kvp in volume.Dict)
+            foreach (var kvp in volume)
             {
                 var transport = kvp.Key;
                 var count = kvp.Value;

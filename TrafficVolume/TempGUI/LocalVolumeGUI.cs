@@ -13,7 +13,7 @@ namespace TrafficVolume.TempGUI
 
         protected override void OnOpened()
         {
-            _dump = LocalTraffic.Volume.Dump();
+            _dump = LocalTraffic.Volume.ToString();
         }
 
         protected override void DrawWindow(int windowID)

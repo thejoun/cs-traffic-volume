@@ -11,7 +11,7 @@ namespace TrafficVolume
             NetManager netManager, BuildingManager buildingManager, DistrictManager districtManager,
             VehicleManager vehicleManager)
         {
-            Vehicle vehicle = vehicleManager.m_vehicles?.m_buffer?[index] ?? default;
+            Vehicle vehicle = vehicleManager.m_vehicles.m_buffer[index];
 
             int pathPositionIndex = vehicle.m_pathPositionIndex;
             int startPositionIndex = pathPositionIndex != byte.MaxValue ? pathPositionIndex >> 1 : 0;
@@ -25,7 +25,7 @@ namespace TrafficVolume
 
             while (pathUnitID != 0U && !flag1 && !flag2)
             {
-                PathUnit pathUnit = pathManager.m_pathUnits?.m_buffer?[(uint) (IntPtr) pathUnitID] ?? default;
+                PathUnit pathUnit = pathManager.m_pathUnits.m_buffer[(uint) (IntPtr) pathUnitID];
 
                 int positionCount = pathUnit.m_positionCount;
 
@@ -37,7 +37,7 @@ namespace TrafficVolume
 
                     if (targets.Contains(segmentInstance))
                     {
-                        NetSegment segment = netManager.m_segments?.m_buffer?[position.m_segment] ?? default;
+                        NetSegment segment = netManager.m_segments.m_buffer[position.m_segment];
 
                         if (segment.m_modifiedIndex < pathUnit.m_buildIndex)
                         {
@@ -89,9 +89,6 @@ namespace TrafficVolume
 
                 if (++safetyCounter >= 262144)
                 {
-                    // CODebugBase<LogChannel>.Error(LogChannel.Core,
-                    //     "Invalid list detected!\n" + System.Environment.StackTrace);
-                    
                     Manager.Log.WriteLog("Invalid list detected\n" + System.Environment.StackTrace);
                     
                     break;
@@ -103,7 +100,6 @@ namespace TrafficVolume
             // important catch!
             if (vehicleInfo == null)
             {
-                // Manager.Log.WriteInfo("IsVehicleOnSegment: VehicleInfo is null");
                 return flag1;
             }
 
@@ -147,14 +143,6 @@ namespace TrafficVolume
             }
 
             return flag3;
-
-            // if (flag3)
-            // {
-            //     InstanceID empty = InstanceID.Empty;
-            //     empty.Vehicle = (ushort) index;
-            //     
-            //     this.AddInstance(empty);
-            // }
         }
 
         public static bool IsCitizenOnSegment(int index, HashSet<InstanceID> targets, PathManager pathManager,
@@ -239,12 +227,12 @@ namespace TrafficVolume
                 return flag1;
             }
             
-            InstanceID targetId = citizenAI.GetTargetID((ushort) index, ref citizenManager.m_instances.m_buffer[index]);
+            InstanceID targetId = citizenAI.GetTargetID((ushort) index, ref citizenInstance);
             
             bool flag3 = flag1 | targets.Contains(targetId);
-            if (targetId.Building != (ushort) 0)
+            if (targetId.Building != 0)
             {
-                Vector3 position = buildingManager.m_buildings.m_buffer[(int) targetId.Building].m_position;
+                Vector3 position = buildingManager.m_buildings.m_buffer[targetId.Building].m_position;
                 InstanceID empty = InstanceID.Empty;
                 empty.District = districtManager.GetDistrict(position);
                 bool flag4 = flag3 | targets.Contains(empty);
@@ -252,9 +240,9 @@ namespace TrafficVolume
                 flag3 = flag4 | targets.Contains(empty);
             }
 
-            if (targetId.NetNode != (ushort) 0)
+            if (targetId.NetNode != 0)
             {
-                Vector3 position = netManager.m_nodes.m_buffer[(int) targetId.NetNode].m_position;
+                Vector3 position = netManager.m_nodes.m_buffer[targetId.NetNode].m_position;
                 InstanceID empty = InstanceID.Empty;
                 empty.District = districtManager.GetDistrict(position);
                 bool flag4 = flag3 | targets.Contains(empty);
@@ -263,16 +251,6 @@ namespace TrafficVolume
             }
 
             return flag3;
-
-            // if (flag3)
-            // {
-            //     InstanceID empty = InstanceID.Empty;
-            //     empty.CitizenInstance = (ushort) index1;
-            //
-            //     this.AddInstance(empty);
-            //     if (this.m_neededPathCount >= 100)
-            //         break;
-            // }
         }
     }
 }

@@ -14,7 +14,7 @@ namespace TrafficVolume.TempGUI
         {
             GlobalTraffic.CountVolume();
             
-            _dump = GlobalTraffic.Volume.Dump();
+            _dump = GlobalTraffic.Volume.ToString();
         }
 
         protected override void DrawWindow(int windowID)

@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using ColossalFramework.UI;
-using HarmonyLib;
 using ICities;
 using TrafficVolume.TempGUI;
 
@@ -10,27 +7,18 @@ namespace TrafficVolume
 {
     public static class Manager
     {
-        private const string HarmonyModID = "trafficvolume";
-
-        public const string VersionId = "10 Sep";
-        
         public const int VehicleMaxIndex = 256 * 64;
         public const int CitizenMaxIndex = 256 * 256;
 
         private static Log _log;
         
-        public static Log Log => _log ?? (_log = new Log(HarmonyModID));
+        public static Log Log => _log ?? (_log = new Log(ModInfo.HarmonyModID));
 
         private static GlobalVolumeGUI _globalVolumeGUI;
         private static LocalVolumeGUI _localVolumeGUI;
 
         private static UnityHook _unityHook;
-
-        public static void OnModEnabled()
-        {
-            AttachHarmony();
-        }
-
+        
         public static void OnLevelLoaded(LoadMode mode)
         {
             UnityHelper.InstantiateSingle(ref _globalVolumeGUI);
@@ -45,20 +33,12 @@ namespace TrafficVolume
 
         private static void OnUnityUpdate()
         {
-            
+            // check for input here
         }
         
         public static void OnSimulationUpdate(float realTimeDelta, float simulationTimeDelta)
         {
             
-        }
-        
-        private static void AttachHarmony()
-        {
-            // Harmony.DEBUG = true;
-
-            var harmony = new Harmony(HarmonyModID);
-            harmony.PatchAll();
         }
 
         // private static void CreateOverlayCheckbox()

@@ -4,181 +4,144 @@ using System.Text;
 
 namespace TrafficVolume
 {
-    public class Volume
+    public class Volume : Dictionary<Transport, uint>
     {
-        public uint pedestrianCount = 0;
-        public uint bicycleCount = 0;
-        public uint residentialCount = 0;
-        public uint industrialCount = 0;
-        public uint postVehicleCount = 0;
-        public uint cityServiceVehicleCount = 0;
-        public uint publicTransportVehicleCount = 0;
-
-        public Dictionary<Transport, uint> Dict => new Dictionary<Transport, uint>
+        public Volume()
         {
-            {Transport.Pedestrian, pedestrianCount},
-            {Transport.Cyclist, bicycleCount},
-            {Transport.Private, residentialCount},
-            {Transport.Public, publicTransportVehicleCount},
-            {Transport.Truck, industrialCount},
-            {Transport.Service, postVehicleCount + cityServiceVehicleCount}
-        };
-
-        public void Clear()
-        {
-            pedestrianCount = 0;
-            bicycleCount = 0;
-            residentialCount = 0;
-            industrialCount = 0;
-            postVehicleCount = 0;
-            cityServiceVehicleCount = 0;
-            publicTransportVehicleCount = 0;
+            Clear();
         }
 
-        public string Dump()
+        public new void Clear()
         {
-            var builder = new StringBuilder();
+            base.Clear();
+            
+            var types = (Transport[]) Enum.GetValues(typeof(Transport));
 
-            builder.Append($"Pedestrians: {pedestrianCount}\n");
-            builder.Append($"Cyclists: {bicycleCount}\n");
-            builder.Append($"Private vehicles: {residentialCount}\n");
-            builder.Append($"Public transport: {publicTransportVehicleCount}\n");
-            builder.Append($"Trucks: {industrialCount}\n");
-            builder.Append($"City service: {postVehicleCount + cityServiceVehicleCount}\n");
-
-            return builder.ToString();
+            foreach (var type in types)
+            {
+                Add(type, 0);
+            }
         }
 
         public void AddVehicle(int index, VehicleManager vehicleManager)
         {
             var vehicle = vehicleManager.m_vehicles.m_buffer[index];
 
-            if ((vehicle.m_flags & (Vehicle.Flags.Created | Vehicle.Flags.Deleted | Vehicle.Flags.WaitingPath)) ==
-                Vehicle.Flags.Created)
+            if ((vehicle.m_flags & (Vehicle.Flags.Created 
+                                    | Vehicle.Flags.Deleted 
+                                    | Vehicle.Flags.WaitingPath)) == Vehicle.Flags.Created)
             {
-                AddVehicle(vehicle);
+                var transport = GetTransportType(vehicle);
+                this[transport]++;
             }
         }
 
         public void AddCitizen(int index, VehicleManager vehicleManager, CitizenManager citizenManager)
         {
-            var citizen = citizenManager.m_instances.m_buffer[index];
+            var citizenInstance = citizenManager.m_instances.m_buffer[index];
+            var citizen = citizenManager.m_citizens.m_buffer[citizenInstance.m_citizen];
 
-            if ((citizen.m_flags & (CitizenInstance.Flags.Created | CitizenInstance.Flags.Deleted |
-                                    CitizenInstance.Flags.WaitingPath))
-                == CitizenInstance.Flags.Created)
+            if ((citizenInstance.m_flags & (CitizenInstance.Flags.Created 
+                                            | CitizenInstance.Flags.Deleted 
+                                            | CitizenInstance.Flags.WaitingPath)) == CitizenInstance.Flags.Created)
             {
-                AddCitizen(citizen, citizenManager, vehicleManager);
+                var transport = GetTransportType(citizen, vehicleManager);
+                this[transport]++;
             }
         }
 
-        public bool TryGetTransportType(Vehicle vehicle, out Transport transport)
+        public Transport GetTransportType(Vehicle vehicle)
         {
-            var vehicleInfo = vehicle.Info;
-            var service = vehicleInfo.m_class.m_service;
+            // based on PathVisualizer
+            
+            var info = vehicle.Info;
+            var service = info.m_class.m_service;
+            var subService = info.m_class.m_subService;
+            var ai = info.m_vehicleAI;
 
             switch (service)
             {
                 case ItemClass.Service.Residential:
-                    transport = Transport.Private;
-                    return true;
+                    return Transport.Private;
                 case ItemClass.Service.Industrial:
-                    transport = Transport.Truck;
-                    return true;
+                    return Transport.Truck;
                 case ItemClass.Service.PublicTransport:
-                    transport = Transport.Public;
-                    return true;
+                    return subService == ItemClass.SubService.PublicTransportPost
+                        ? Transport.Truck
+                        : Transport.Public;
+                case ItemClass.Service.Commercial:
+                    return Transport.Truck;
                 case ItemClass.Service.Fishing:
-                    transport = default;
-                    return false;
+                    return ai && ai is FishingBoatAI
+                        ? Transport.Truck
+                        : Transport.Public;
                 default:
-                    transport = Transport.Service;
-                    return true;
+                    return Transport.Service;
             }
         }
 
-        private void AddVehicle(Vehicle vehicle)
+        public Transport GetTransportType(Citizen citizen, VehicleManager vehicleManager)
         {
-            VehicleInfo vehicleInfo = vehicle.Info;
+            var vehicleType = VehicleInfo.VehicleType.None;
+            var vehicleId = citizen.m_vehicle;
 
-            ItemClass.Service service = vehicleInfo.m_class.m_service;
-
-            switch (service)
+            if (vehicleId != 0)
             {
-                case ItemClass.Service.Residential:
-                    residentialCount++;
-                    break;
-                case ItemClass.Service.Industrial:
-                    industrialCount++;
-                    break;
-                default:
-                    switch (service - 19)
-                    {
-                        case ItemClass.Service.None:
-                            var isPost = vehicleInfo.m_class.m_subService ==
-                                         ItemClass.SubService.PublicTransportPost;
-                            if (isPost)
-                            {
-                                postVehicleCount++;
-                            }
-                            else
-                            {
-                                publicTransportVehicleCount++;
-                            }
+                var vehicle = vehicleManager.m_vehicles.m_buffer[vehicleId];
+                var info = vehicle.Info;
 
-                            break;
-                        default:
-                            if (service == ItemClass.Service.Fishing)
-                            {
-                                if (vehicleInfo.m_vehicleAI is FishingBoatAI)
-                                {
-                                    industrialCount++;
-                                }
-                                else
-                                {
-                                    publicTransportVehicleCount++;
-                                }
-                            }
-                            else
-                            {
-                                cityServiceVehicleCount++;
-                            }
-
-                            break;
-                    }
-
-                    break;
-            }
-        }
-
-        private void AddCitizen(CitizenInstance citizen, CitizenManager citizenManager,
-            VehicleManager vehicleManager)
-        {
-            VehicleInfo.VehicleType vehicleType = VehicleInfo.VehicleType.None;
-
-            uint citizenInstance = citizen.m_citizen;
-
-            if (citizenInstance != 0U)
-            {
-                ushort vehicle = citizenManager.m_citizens.m_buffer[(uint) (IntPtr) citizenInstance].m_vehicle;
-
-                if (vehicle != 0)
+                if (info != null)
                 {
-                    VehicleInfo info = vehicleManager.m_vehicles.m_buffer[vehicle].Info;
-
-                    if (info != null) vehicleType = info.m_vehicleType;
+                    vehicleType = info.m_vehicleType;
                 }
             }
 
             switch (vehicleType)
             {
-                case VehicleInfo.VehicleType.None:
-                    pedestrianCount++;
-                    break;
                 case VehicleInfo.VehicleType.Bicycle:
-                    bicycleCount++;
-                    break;
+                    return Transport.Cyclist;
+                default:
+                    return Transport.Pedestrian;
             }
+        }
+
+        public Transport GetTransportType(VehicleAI ai)
+        {
+            // these are all the AIs that override their route color
+            if (ai is PassengerCarAI passengerCarAI) return Transport.Private;
+            if (ai is CargoTruckAI cargoTruckAI) return Transport.Truck;
+            if (ai is BusAI busAI) return Transport.Public;
+            if (ai is CableCarAI cableCarAI) return Transport.Public;
+            if (ai is CargoPlaneAI cargoPlaneAI) return Transport.Public;
+            if (ai is CargoShipAI cargoShipAI) return Transport.Public;
+            if (ai is CargoTrainAI cargoTrainAI) return Transport.Public;
+            if (ai is FishingBoatAI fishingBoatAI) return Transport.Public;
+            if (ai is PassengerBlimpAI passengerBlimpAI) return Transport.Public;
+            if (ai is PassengerFerryAI passengerFerryAI) return Transport.Public;
+            if (ai is PassengerHelicopterAI passengerHelicopterAI) return Transport.Public;
+            if (ai is PassengerPlaneAI passengerPlaneAI) return Transport.Public;
+            if (ai is PassengerShipAI passengerShipAI) return Transport.Public;
+            if (ai is PassengerTrainAI passengerTrainAI) return Transport.Public;
+            if (ai is TaxiAI taxiAI) return Transport.Public;
+            if (ai is TramAI tramAI) return Transport.Public;
+            if (ai is TrolleybusAI trolleybusAI) return Transport.Public;
+            
+            // service - default for all other VehicleAIs
+            return Transport.Service;
+        }
+
+        public override string ToString()
+        {
+            var builder = new StringBuilder();
+
+            builder.Append($"Pedestrians: {this[Transport.Pedestrian]}\n");
+            builder.Append($"Cyclists: {this[Transport.Cyclist]}\n");
+            builder.Append($"Private vehicles: {this[Transport.Private]}\n");
+            builder.Append($"Public transport: {this[Transport.Public]}\n");
+            builder.Append($"Trucks: {this[Transport.Truck]}\n");
+            builder.Append($"City service: {this[Transport.Service]}\n");
+
+            return builder.ToString();
         }
     }
 }
