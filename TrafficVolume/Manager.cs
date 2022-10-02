@@ -18,8 +18,21 @@ namespace TrafficVolume
         private static LocalVolumeGUI _localVolumeGUI;
 
         private static UnityHook _unityHook;
+
+        private static bool _initialized;
         
         public static void OnLevelLoaded(LoadMode mode)
+        {
+            if (!_initialized)
+            {
+                Init();
+                _initialized = true;
+            }
+            
+            UIManager.CreateTrafficChart();
+        }
+
+        private static void Init()
         {
             UnityHelper.InstantiateSingle(ref _globalVolumeGUI);
             UnityHelper.InstantiateSingle(ref _localVolumeGUI);
@@ -28,7 +41,6 @@ namespace TrafficVolume
             _unityHook.UnityUpdate += OnUnityUpdate;
 
             UIManager.PrepareColors();
-            UIManager.CreateTrafficChart();
         }
 
         private static void OnUnityUpdate()
