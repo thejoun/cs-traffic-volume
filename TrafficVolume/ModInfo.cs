@@ -6,10 +6,9 @@ namespace TrafficVolume
     public class ModInfo : IUserMod
     {
         public const string HarmonyModID = "trafficvolume";
-        public const string VersionId = "10 Sep";
-    
+
         public string Name => "Traffic Volume";
-        public string Description => $"[{VersionId}] Shows info about traffic volume.";
+        public string Description => $"Shows info about traffic volume.";
 
         public void OnEnabled()
         {
