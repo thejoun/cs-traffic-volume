@@ -4,18 +4,21 @@ using System.Text;
 
 namespace TrafficVolume
 {
-    public class Volume : Dictionary<Transport, uint>
+    public class Volume : Dictionary<TransportType, uint>
     {
-        public Volume()
+        public Volume(bool prepareTypes = true)
         {
-            Clear();
+            if (prepareTypes)
+            {
+                Prepare();
+            }
         }
 
-        public new void Clear()
+        public void Prepare()
         {
-            base.Clear();
+            Clear();
             
-            var types = (Transport[]) Enum.GetValues(typeof(Transport));
+            var types = (TransportType[]) Enum.GetValues(typeof(TransportType));
 
             foreach (var type in types)
             {
@@ -50,7 +53,7 @@ namespace TrafficVolume
             }
         }
 
-        public Transport GetTransportType(Vehicle vehicle)
+        private TransportType GetTransportType(Vehicle vehicle)
         {
             // based on PathVisualizer
             
@@ -62,25 +65,25 @@ namespace TrafficVolume
             switch (service)
             {
                 case ItemClass.Service.Residential:
-                    return Transport.Private;
+                    return TransportType.Private;
                 case ItemClass.Service.Industrial:
-                    return Transport.Truck;
+                    return TransportType.Truck;
                 case ItemClass.Service.PublicTransport:
                     return subService == ItemClass.SubService.PublicTransportPost
-                        ? Transport.Truck
-                        : Transport.Public;
+                        ? TransportType.Truck
+                        : TransportType.Public;
                 case ItemClass.Service.Commercial:
-                    return Transport.Truck;
+                    return TransportType.Truck;
                 case ItemClass.Service.Fishing:
                     return ai && ai is FishingBoatAI
-                        ? Transport.Truck
-                        : Transport.Public;
+                        ? TransportType.Truck
+                        : TransportType.Public;
                 default:
-                    return Transport.Service;
+                    return TransportType.Service;
             }
         }
 
-        public Transport GetTransportType(Citizen citizen, VehicleManager vehicleManager)
+        private TransportType GetTransportType(Citizen citizen, VehicleManager vehicleManager)
         {
             var vehicleType = VehicleInfo.VehicleType.None;
             var vehicleId = citizen.m_vehicle;
@@ -90,7 +93,7 @@ namespace TrafficVolume
                 var vehicle = vehicleManager.m_vehicles.m_buffer[vehicleId];
                 var info = vehicle.Info;
 
-                if (info != null)
+                if (info)
                 {
                     vehicleType = info.m_vehicleType;
                 }
@@ -99,47 +102,48 @@ namespace TrafficVolume
             switch (vehicleType)
             {
                 case VehicleInfo.VehicleType.Bicycle:
-                    return Transport.Cyclist;
+                    return TransportType.Cyclist;
                 default:
-                    return Transport.Pedestrian;
+                    return TransportType.Pedestrian;
             }
         }
-
-        public Transport GetTransportType(VehicleAI ai)
+        
+        // may use later
+        public TransportType GetTransportType(VehicleAI ai)
         {
             // these are all the AIs that override their route color
-            if (ai is PassengerCarAI passengerCarAI) return Transport.Private;
-            if (ai is CargoTruckAI cargoTruckAI) return Transport.Truck;
-            if (ai is BusAI busAI) return Transport.Public;
-            if (ai is CableCarAI cableCarAI) return Transport.Public;
-            if (ai is CargoPlaneAI cargoPlaneAI) return Transport.Public;
-            if (ai is CargoShipAI cargoShipAI) return Transport.Public;
-            if (ai is CargoTrainAI cargoTrainAI) return Transport.Public;
-            if (ai is FishingBoatAI fishingBoatAI) return Transport.Public;
-            if (ai is PassengerBlimpAI passengerBlimpAI) return Transport.Public;
-            if (ai is PassengerFerryAI passengerFerryAI) return Transport.Public;
-            if (ai is PassengerHelicopterAI passengerHelicopterAI) return Transport.Public;
-            if (ai is PassengerPlaneAI passengerPlaneAI) return Transport.Public;
-            if (ai is PassengerShipAI passengerShipAI) return Transport.Public;
-            if (ai is PassengerTrainAI passengerTrainAI) return Transport.Public;
-            if (ai is TaxiAI taxiAI) return Transport.Public;
-            if (ai is TramAI tramAI) return Transport.Public;
-            if (ai is TrolleybusAI trolleybusAI) return Transport.Public;
+            if (ai is PassengerCarAI passengerCarAI) return TransportType.Private;
+            if (ai is CargoTruckAI cargoTruckAI) return TransportType.Truck;
+            if (ai is BusAI busAI) return TransportType.Public;
+            if (ai is CableCarAI cableCarAI) return TransportType.Public;
+            if (ai is CargoPlaneAI cargoPlaneAI) return TransportType.Public;
+            if (ai is CargoShipAI cargoShipAI) return TransportType.Public;
+            if (ai is CargoTrainAI cargoTrainAI) return TransportType.Public;
+            if (ai is FishingBoatAI fishingBoatAI) return TransportType.Public;
+            if (ai is PassengerBlimpAI passengerBlimpAI) return TransportType.Public;
+            if (ai is PassengerFerryAI passengerFerryAI) return TransportType.Public;
+            if (ai is PassengerHelicopterAI passengerHelicopterAI) return TransportType.Public;
+            if (ai is PassengerPlaneAI passengerPlaneAI) return TransportType.Public;
+            if (ai is PassengerShipAI passengerShipAI) return TransportType.Public;
+            if (ai is PassengerTrainAI passengerTrainAI) return TransportType.Public;
+            if (ai is TaxiAI taxiAI) return TransportType.Public;
+            if (ai is TramAI tramAI) return TransportType.Public;
+            if (ai is TrolleybusAI trolleybusAI) return TransportType.Public;
             
             // service - default for all other VehicleAIs
-            return Transport.Service;
+            return TransportType.Service;
         }
 
         public override string ToString()
         {
             var builder = new StringBuilder();
 
-            builder.Append($"Pedestrians: {this[Transport.Pedestrian]}\n");
-            builder.Append($"Cyclists: {this[Transport.Cyclist]}\n");
-            builder.Append($"Private vehicles: {this[Transport.Private]}\n");
-            builder.Append($"Public transport: {this[Transport.Public]}\n");
-            builder.Append($"Trucks: {this[Transport.Truck]}\n");
-            builder.Append($"City service: {this[Transport.Service]}\n");
+            builder.Append($"Pedestrians: {this[TransportType.Pedestrian]}\n");
+            builder.Append($"Cyclists: {this[TransportType.Cyclist]}\n");
+            builder.Append($"Private vehicles: {this[TransportType.Private]}\n");
+            builder.Append($"Public transport: {this[TransportType.Public]}\n");
+            builder.Append($"Trucks: {this[TransportType.Truck]}\n");
+            builder.Append($"City service: {this[TransportType.Service]}\n");
 
             return builder.ToString();
         }

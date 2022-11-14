@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using ColossalFramework.UI;
 using HarmonyLib;
+using TrafficVolume.UI;
 
 namespace TrafficVolume.Patches
 {
@@ -15,25 +16,17 @@ namespace TrafficVolume.Patches
             UICheckBox ___m_TrucksCheckBox,
             UICheckBox ___m_CityServiceCheckBox)
         {
-            UIManager.TransportCheckBoxes = new Dictionary<Transport, UICheckBox>()
+            var checkboxes = new List<CheckboxData>
             {
-                {Transport.Pedestrian, ___m_PedestrianCheckBox},
-                {Transport.Cyclist, ___m_CyclistCheckBox},
-                {Transport.Private, ___m_PrivateVehicleCheckBox},
-                {Transport.Public, ___m_PublicTransportCheckBox},
-                {Transport.Truck, ___m_TrucksCheckBox},
-                {Transport.Service, ___m_CityServiceCheckBox}
+                new CheckboxData(___m_PedestrianCheckBox, TransportType.Pedestrian),
+                new CheckboxData(___m_CyclistCheckBox, TransportType.Cyclist),
+                new CheckboxData(___m_PrivateVehicleCheckBox, TransportType.Private),
+                new CheckboxData(___m_PublicTransportCheckBox, TransportType.Public),
+                new CheckboxData(___m_TrucksCheckBox, TransportType.Truck),
+                new CheckboxData(___m_CityServiceCheckBox, TransportType.Service)
             };
-
-            UIManager.TransportLabels = new Dictionary<Transport, string>()
-            {
-                {Transport.Pedestrian, ___m_PedestrianCheckBox.text},
-                {Transport.Cyclist, ___m_CyclistCheckBox.text},
-                {Transport.Private, ___m_PrivateVehicleCheckBox.text},
-                {Transport.Public, ___m_PublicTransportCheckBox.text},
-                {Transport.Truck, ___m_TrucksCheckBox.text},
-                {Transport.Service, ___m_CityServiceCheckBox.text}
-            };
+            
+            UIManager.RegisterCheckboxes(checkboxes);
         }
     }
 }

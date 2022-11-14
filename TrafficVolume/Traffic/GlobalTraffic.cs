@@ -11,7 +11,7 @@ namespace TrafficVolume
             var vehicleManager = Singleton<VehicleManager>.instance;
             var citizenManager = Singleton<CitizenManager>.instance;
 
-            Volume.Clear();
+            Volume.Prepare();
             
             for (int vehicleID = 0; vehicleID < Manager.VehicleMaxIndex; ++vehicleID)
             {

@@ -8,7 +8,7 @@ namespace TrafficVolume
         public const string HarmonyModID = "trafficvolume";
 
         public string Name => "Traffic Volume";
-        public string Description => $"Shows info about traffic volume.";
+        public string Description => "shows info about traffic volume";
 
         public void OnEnabled()
         {

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using ColossalFramework.UI;
@@ -16,102 +15,33 @@ namespace TrafficVolume.UI
         private static readonly Vector2 HoverBoxOffset = new Vector2(0f, -2f);
         private static readonly Color LightTextColor = new Color(0.85f, 0.85f, 0.9f);
         
-        private Dictionary<Transport, Texture2D> _textures;
+        private readonly Dictionary<TransportType, Texture2D> _textures = new Dictionary<TransportType, Texture2D>();
 
         private GUIStyle _hoverBoxStyle;
-        
+
+        public override void Awake()
+        {
+            base.Awake();
+            
+            PrepareStyles();
+        }
+
         private void OnGUI()
         {
-            if (_hoverBoxStyle == null)
-            {
-                _hoverBoxStyle = new GUIStyle()
-                {
-                    fontSize = 13,
-                    alignment = TextAnchor.MiddleCenter,
-                    fontStyle = FontStyle.Bold,
-                    normal = {textColor = LightTextColor}
-                };
-            }
-
             if (m_IsMouseHovering)
             {
-                var cam = GetCamera();
-                var centerPos = (Vector2)cam.WorldToScreenPoint(center);
-                var mousePos = (Vector2)Input.mousePosition;
-                var direction = mousePos - centerPos;
-
-                if (direction.magnitude > UIManager.TrafficChartSize / 2f)
-                {
-                    return;
-                }
-                
-                var negative = direction.x < 0;
-                
-                // old Unity does not have SignedAngle
-                var angle = Vector2.Angle(Vector2.up, direction);
-            
-                if (negative) angle = -angle + 360;
-
-                var fraction = angle / 360f;
-            
-                var index = m_Slices
-                    .FindIndex(slice => slice.startValue < fraction && slice.endValue > fraction);
-
-                if (index == -1)
-                {
-                    return;
-                }
-
-                var transport = (Transport) index;
-
-                var hoveredSlice = m_Slices[index];
-            
-                var boxSize = new Vector2(HoverBoxWidth, HoverBoxHeight);
-                    
-                var rectPosX = Input.mousePosition.x - boxSize.x / 2f + HoverBoxOffset.x;
-                var rectPosY = Screen.height - Input.mousePosition.y - boxSize.y +HoverBoxOffset.y;
-            
-                var percent = (hoveredSlice.endValue - hoveredSlice.startValue) * 100f;
-                var text = $"{percent:F0}%";
-                    
-                var style = new GUIStyle(_hoverBoxStyle)
-                {
-                    normal = {background = _textures[transport]}
-                };
-
-                var guiColor = GUI.color;
-                var guiContentColor = GUI.contentColor;
-
-                GUI.color = Color.white;
-                GUI.contentColor = Color.white;
-                GUI.Box(new Rect(rectPosX, rectPosY, boxSize.x, boxSize.y), text, style);
-                GUI.color = guiColor;
-                GUI.contentColor = guiContentColor;
+                DrawHoverBox();
             }
         }
 
-        public void Create()
+        public void Create(IEnumerable<CheckboxData> checkboxes)
         {
-            var types = (Transport[]) Enum.GetValues(typeof(Transport));
-            
-            foreach (var transport in types)
+            foreach (var checkbox in checkboxes)
             {
-                AddSlice();
-
-                var slice = GetSlice(transport);
-
-                slice.endValue = 0f;
-
-                var primaryColor = UIManager.TransportPrimaryColors[transport];
-                var secondaryColor = UIManager.TransportSecondaryColors[transport];
-
-                slice.innerColor = primaryColor;
-                slice.outterColor = secondaryColor;
+                AddSlice(checkbox);
             }
-            
-            PrepareTextures();
         }
-        
+
         public void DisplayVolume(Volume volume)
         {
             var counts = volume.Values.ToArray();
@@ -119,6 +49,8 @@ namespace TrafficVolume.UI
             var sum = counts.Sum(c => c);
             var percentages = counts.Select(c => 1f * c / sum).ToArray();
 
+            Manager.Log.WriteLog($"Displaying chart, sum is {sum}");
+            
             gameObject.SetActive(sum != 0);
 
             if (sum == 0)
@@ -148,29 +80,120 @@ namespace TrafficVolume.UI
             Invalidate();
         }
 
-        private SliceSettings GetSlice(Transport transport)
+        public void PrepareColors(IEnumerable<CheckboxData> checkboxes)
+        {
+            _textures.Clear();
+
+            foreach (var checkbox in checkboxes)
+            {
+                var transport = checkbox.Transport;
+                
+                var texture = PrepareTexture(checkbox);
+                _textures.Add(transport, texture);
+
+                var slice = GetSlice(transport);
+                slice.innerColor = checkbox.PrimaryColor;
+                slice.outterColor = checkbox.SecondaryColor;
+            }
+        }
+
+        private void AddSlice(CheckboxData checkbox)
+        {
+            var transport = checkbox.Transport;
+
+            AddSlice();
+
+            var slice = GetSlice(transport);
+
+            slice.endValue = 0f;
+
+            // colors in checkboxes may not have been set properly yet
+            // need to call PrepareColors later
+            
+            slice.innerColor = checkbox.PrimaryColor;
+            slice.outterColor = checkbox.SecondaryColor;
+
+            var texture = PrepareTexture(checkbox);
+            _textures.Add(transport, texture);
+        }
+
+        private void DrawHoverBox()
+        {
+            var cam = GetCamera();
+            var centerPos = (Vector2) cam.WorldToScreenPoint(center);
+            var mousePos = (Vector2) Input.mousePosition;
+            var direction = mousePos - centerPos;
+
+            if (direction.magnitude > UIManager.TrafficChartSize / 2f)
+            {
+                return;
+            }
+
+            var negative = direction.x < 0;
+
+            // old Unity does not have SignedAngle
+            var angle = Vector2.Angle(Vector2.up, direction);
+
+            if (negative) angle = -angle + 360;
+
+            var fraction = angle / 360f;
+
+            var index = m_Slices
+                .FindIndex(slice => slice.startValue < fraction && slice.endValue > fraction);
+
+            if (index == -1)
+            {
+                return;
+            }
+
+            var transport = (TransportType) index;
+
+            var hoveredSlice = m_Slices[index];
+
+            var boxSize = new Vector2(HoverBoxWidth, HoverBoxHeight);
+
+            var rectPosX = Input.mousePosition.x - boxSize.x / 2f + HoverBoxOffset.x;
+            var rectPosY = Screen.height - Input.mousePosition.y - boxSize.y + HoverBoxOffset.y;
+
+            var percent = (hoveredSlice.endValue - hoveredSlice.startValue) * 100f;
+            var text = $"{percent:F0}%";
+
+            var style = new GUIStyle(_hoverBoxStyle)
+            {
+                normal = {background = _textures[transport]}
+            };
+
+            var guiColor = GUI.color;
+            var guiContentColor = GUI.contentColor;
+
+            GUI.color = Color.white;
+            GUI.contentColor = Color.white;
+            GUI.Box(new Rect(rectPosX, rectPosY, boxSize.x, boxSize.y), text, style);
+            GUI.color = guiColor;
+            GUI.contentColor = guiContentColor;
+        }
+
+        private void PrepareStyles()
+        {
+            _hoverBoxStyle = new GUIStyle()
+            {
+                fontSize = 13,
+                alignment = TextAnchor.MiddleCenter,
+                fontStyle = FontStyle.Bold,
+                normal = {textColor = LightTextColor}
+            };
+        }
+
+        private SliceSettings GetSlice(TransportType transport)
         {
             return GetSlice((int) transport);
         }
 
-        private void PrepareTextures()
-        {
-            var types = (Transport[]) Enum.GetValues(typeof(Transport));
-
-            _textures = new Dictionary<Transport, Texture2D>();
-
-            foreach (var type in types)
-            {
-                _textures.Add(type, PrepareTexture(type));
-            }
-        }
-
-        private Texture2D PrepareTexture(Transport transport)
+        private Texture2D PrepareTexture(CheckboxData checkbox)
         {
             var texture = new Texture2D(HoverBoxWidth, HoverBoxHeight);
 
-            var primaryColor = UIManager.TransportPrimaryColors[transport];
-            var secondaryColor = UIManager.TransportSecondaryColors[transport];
+            var primaryColor = checkbox.PrimaryColor;
             
             var topColor = UIManager.BackgroundTopColor;
             var bottomColor = UIManager.BackgroundBottomColor;

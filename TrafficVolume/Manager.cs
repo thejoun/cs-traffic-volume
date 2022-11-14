@@ -15,39 +15,12 @@ namespace TrafficVolume
         public static Log Log => _log ?? (_log = new Log(ModInfo.HarmonyModID));
 
         private static GlobalVolumeGUI _globalVolumeGUI;
-        private static LocalVolumeGUI _localVolumeGUI;
-
-        private static UnityHook _unityHook;
-
-        private static bool _initialized;
         
-        public static void OnLevelLoaded(LoadMode mode)
-        {
-            if (!_initialized)
-            {
-                Init();
-                _initialized = true;
-            }
-            
-            UIManager.CreateTrafficChart();
-        }
-
-        private static void Init()
+        public static void OnLevelLoaded()
         {
             UnityHelper.InstantiateSingle(ref _globalVolumeGUI);
-            UnityHelper.InstantiateSingle(ref _localVolumeGUI);
-
-            UnityHelper.InstantiateSingle(ref _unityHook);
-            _unityHook.UnityUpdate += OnUnityUpdate;
-
-            UIManager.PrepareColors();
         }
 
-        private static void OnUnityUpdate()
-        {
-            // check for input here
-        }
-        
         public static void OnSimulationUpdate(float realTimeDelta, float simulationTimeDelta)
         {
             

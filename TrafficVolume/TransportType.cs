@@ -1,6 +1,6 @@
 namespace TrafficVolume
 {
-    public enum Transport
+    public enum TransportType
     {
         Pedestrian,
         Cyclist,

@@ -22,7 +22,7 @@ namespace TrafficVolume
                 return;
             }
 
-            Volume.Clear();
+            Volume.Prepare();
             
             for (int vehicleID = 0; vehicleID < Manager.VehicleMaxIndex; ++vehicleID)
             {
@@ -46,8 +46,7 @@ namespace TrafficVolume
                 }
             }
 
-            UIManager.DisplayTrafficCount(Volume);
-            UIManager.TrafficChart.DisplayVolume(Volume);
+            UIManager.DisplayVolume(Volume);
         }
     }
 }

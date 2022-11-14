@@ -4,23 +4,10 @@ namespace TrafficVolume.CitiesExtensions
 {
 	public class LoadingExtension : LoadingExtensionBase
     {
-	    // Thread: Main
-		public override void OnCreated(ILoading loading)
+	    public override void OnLevelLoaded(LoadMode mode)
 		{
-			
-		}
-		
-		// Thread: Main
-		public override void OnReleased()
-		{
-			
-		}
-
-		public override void OnLevelLoaded(LoadMode mode)
-		{
-			base.OnLevelLoaded(mode);
-			
-			Manager.OnLevelLoaded(mode);
+			Manager.OnLevelLoaded();
+			UIManager.OnLevelLoaded();
 		}
     }
 }
