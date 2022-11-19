@@ -1,6 +1,7 @@
 using ColossalFramework;
+using TrafficVolume.Managers;
 
-namespace TrafficVolume
+namespace TrafficVolume.Traffic
 {
     public static class GlobalTraffic
     {

@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using HarmonyLib;
+using TrafficVolume.Managers;
+using TrafficVolume.Traffic;
 
 namespace TrafficVolume.Patches
 {
@@ -11,7 +13,11 @@ namespace TrafficVolume.Patches
         {
             if (min == 0 && max == 256)
             {
-                LocalTraffic.CountLocalVolume(___m_targets);
+                var volume = LocalTraffic.CountLocalVolume(___m_targets);
+                
+                UIManager.DisplayVolume(volume);
+                
+                Manager.ResetRefreshTimer();
             }
         }
     }

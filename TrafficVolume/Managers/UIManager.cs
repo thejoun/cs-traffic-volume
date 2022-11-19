@@ -3,6 +3,7 @@ using System.Linq;
 using ColossalFramework;
 using ColossalFramework.UI;
 using TrafficVolume.Extensions;
+using TrafficVolume.Managers;
 using TrafficVolume.UI;
 using UnityEngine;
 
@@ -20,6 +21,7 @@ namespace TrafficVolume
 
         private static TrafficRadialChart _trafficChart;
         private static Volume _displayedVolume;
+        private static UIPanel _trafficPanel;
 
         private static readonly Dictionary<TransportType, CheckboxData> Checkboxes 
             = new Dictionary<TransportType, CheckboxData>();
@@ -27,6 +29,8 @@ namespace TrafficVolume
         private static TrafficRoutesInfoViewPanel RoutesPanel => TrafficRoutesInfoViewPanel.instance;
         private static Color[] RouteColors => Singleton<InfoManager>.instance.m_properties.m_routeColors;
 
+        public static bool IsTrafficPanelOpen => _trafficPanel && _trafficPanel.isVisible;
+        
         private static void OnCheckboxCheckChanged(CheckboxData checkbox)
         {
             RefreshVolume();
@@ -49,10 +53,13 @@ namespace TrafficVolume
                 
                 checkboxData.CheckChanged += OnCheckboxCheckChanged;
             }
+
+            if (!_trafficPanel)
+            {
+                _trafficPanel = GetTrafficPanel();
+            }
             
-            var trafficPanel = GetTrafficPanel();
-            
-            _trafficChart = CreateTrafficChart(trafficPanel);
+            _trafficChart = CreateTrafficChart(_trafficPanel);
         }
 
         public static void DisplayVolume(Volume volume)
@@ -107,7 +114,7 @@ namespace TrafficVolume
         {
             if (_trafficChart)
             {
-                var chartVolume = new Volume(false);
+                var chartVolume = new Volume();
 
                 foreach (var transportVolume in volume)
                 {

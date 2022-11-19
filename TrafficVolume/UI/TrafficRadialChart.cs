@@ -49,8 +49,6 @@ namespace TrafficVolume.UI
             var sum = counts.Sum(c => c);
             var percentages = counts.Select(c => 1f * c / sum).ToArray();
 
-            Manager.Log.WriteLog($"Displaying chart, sum is {sum}");
-            
             gameObject.SetActive(sum != 0);
 
             if (sum == 0)

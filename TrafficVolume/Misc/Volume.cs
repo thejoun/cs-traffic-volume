@@ -6,14 +6,6 @@ namespace TrafficVolume
 {
     public class Volume : Dictionary<TransportType, uint>
     {
-        public Volume(bool prepareTypes = true)
-        {
-            if (prepareTypes)
-            {
-                Prepare();
-            }
-        }
-
         public void Prepare()
         {
             Clear();

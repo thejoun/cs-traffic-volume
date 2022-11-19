@@ -1,14 +1,22 @@
 using System.Collections.Generic;
 using ColossalFramework;
+using TrafficVolume.Managers;
 
-namespace TrafficVolume
+namespace TrafficVolume.Traffic
 {
     public static class LocalTraffic
     {
-        public static readonly Volume Volume = new Volume();
+        private static HashSet<InstanceID> _targets;
 
-        public static void CountLocalVolume(HashSet<InstanceID> targets)
+        public static Volume CountLocalVolume()
         {
+            return CountLocalVolume(_targets);
+        }
+        
+        public static Volume CountLocalVolume(HashSet<InstanceID> targets)
+        {
+            _targets = targets;
+            
             var vehicleManager = Singleton<VehicleManager>.instance;
             var citizenManager = Singleton<CitizenManager>.instance;
             var netManager = Singleton<NetManager>.instance;
@@ -16,13 +24,15 @@ namespace TrafficVolume
             var buildingManager = Singleton<BuildingManager>.instance;
             var districtManager = Singleton<DistrictManager>.instance;
 
+            var volume = new Volume();
+
             if (targets == null)
             {
                 Manager.Log.WriteLog("CountLocalVolume: targets hash set is null");
-                return;
+                return volume;
             }
 
-            Volume.Prepare();
+            volume.Prepare();
             
             for (int vehicleID = 0; vehicleID < Manager.VehicleMaxIndex; ++vehicleID)
             {
@@ -31,7 +41,7 @@ namespace TrafficVolume
 
                 if (isOnSegment)
                 {
-                    Volume.AddVehicle(vehicleID, vehicleManager);
+                    volume.AddVehicle(vehicleID, vehicleManager);
                 }
             }
             
@@ -42,11 +52,11 @@ namespace TrafficVolume
 
                 if (isOnSegment)
                 {
-                    Volume.AddCitizen(citizenID, vehicleManager, citizenManager);
+                    volume.AddCitizen(citizenID, vehicleManager, citizenManager);
                 }
             }
 
-            UIManager.DisplayVolume(Volume);
+            return volume;
         }
     }
 }
