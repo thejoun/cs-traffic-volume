@@ -15,10 +15,10 @@ namespace TrafficVolume.Managers
         private static GlobalVolumeGUI _globalVolumeGUI;
         private static float _refreshTimer;
 
-        public static Log Log => _log ?? (_log = new Log(ModInfo.HarmonyModID));
+        public static Log Log => _log ?? (_log = new Log(ModInfo.LogFlag));
 
-        private static bool AutoRefreshEnabled => true;
-        private static float RefreshInterval => 1f;
+        private static bool AutoRefreshEnabled => Settings.IsAutoRefreshEnabled;
+        private static float RefreshInterval => Settings.GetAutoRefreshInterval();
         
         public static event Action Refresh;
         
@@ -27,17 +27,22 @@ namespace TrafficVolume.Managers
             UnityHelper.InstantiateSingle(ref _globalVolumeGUI);
 
             ResetRefreshTimer();
+
+            Keymapping.SingleKeyPressBlock = false;
         }
 
         public static void OnSimulationUpdate(float realTimeDelta, float simulationTimeDelta)
         {
-            _refreshTimer += realTimeDelta;
-
-            if (_refreshTimer > RefreshInterval)
+            if (AutoRefreshEnabled)
             {
-                OnRefreshTimerGoal();
+                _refreshTimer += realTimeDelta;
+
+                if (_refreshTimer > RefreshInterval)
+                {
+                    OnRefreshTimerGoal();
                 
-                _refreshTimer -= RefreshInterval;
+                    _refreshTimer -= RefreshInterval;
+                }
             }
         }
 
@@ -50,16 +55,10 @@ namespace TrafficVolume.Managers
         {
             if (AutoRefreshEnabled && UIManager.IsTrafficPanelOpen)
             {
-                Log.WriteLog($"Auto-refreshing local volume");
-                
                 var volume = LocalTraffic.CountLocalVolume();
                 UIManager.DisplayVolume(volume);
             }
-            else
-            {
-                Log.WriteLog($"No refresh");
-            }
-
+            
             Refresh?.Invoke();
         }
     }

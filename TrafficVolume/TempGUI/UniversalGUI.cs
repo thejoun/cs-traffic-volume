@@ -10,6 +10,8 @@ namespace TrafficVolume.TempGUI
 
         protected virtual bool AllowDrag => true;
 
+        protected bool IsOpen => m_open; 
+        
         protected abstract Rect Rect { get; set; } 
         protected abstract IEnumerable<KeyCode> EnableKeyCombination { get; }
 
@@ -37,7 +39,7 @@ namespace TrafficVolume.TempGUI
                 return;
             }
             
-            Rect = UnityEngine.GUI.Window(0, Rect, DrawDraggableWindow, "");
+            Rect = GUI.Window(0, Rect, DrawDraggableWindow, "");
         }
 
         protected void SwitchVisibility()
