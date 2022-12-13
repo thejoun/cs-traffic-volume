@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using ColossalFramework;
+using TrafficVolume.Helpers;
 using TrafficVolume.Managers;
 
 namespace TrafficVolume.Traffic
@@ -8,9 +9,16 @@ namespace TrafficVolume.Traffic
     {
         private static HashSet<InstanceID> _targets;
 
-        public static Volume CountLocalVolume()
+        public static bool TryCountLocalVolume(out Volume volume)
         {
-            return CountLocalVolume(_targets);
+            if (_targets == null || _targets.Count == 0)
+            {
+                volume = null;
+                return false;
+            }
+            
+            volume = CountLocalVolume(_targets);
+            return true;
         }
         
         public static Volume CountLocalVolume(HashSet<InstanceID> targets)
@@ -24,19 +32,16 @@ namespace TrafficVolume.Traffic
             var buildingManager = Singleton<BuildingManager>.instance;
             var districtManager = Singleton<DistrictManager>.instance;
 
+            var vehicleCount = vehicleManager.m_vehicles.m_size;
+            var citizenCount = citizenManager.m_instances.m_size;
+            
             var volume = new Volume();
 
-            if (targets == null)
-            {
-                Manager.Log.WriteLog("CountLocalVolume: targets hash set is null");
-                return volume;
-            }
-
             volume.Prepare();
-            
-            for (int vehicleID = 0; vehicleID < Manager.VehicleMaxIndex; ++vehicleID)
+
+            for (int vehicleID = 0; vehicleID < vehicleCount; ++vehicleID)
             {
-                var isOnSegment = Helper.IsVehicleOnSegment(vehicleID, targets, pathManager, netManager,
+                var isOnSegment = VehicleHelper.IsVehicleOnSegment(vehicleID, targets, pathManager, netManager,
                     buildingManager, districtManager, vehicleManager);
 
                 if (isOnSegment)
@@ -45,9 +50,9 @@ namespace TrafficVolume.Traffic
                 }
             }
             
-            for (int citizenID = 0; citizenID < Manager.CitizenMaxIndex; ++citizenID)
+            for (int citizenID = 0; citizenID < citizenCount; ++citizenID)
             {
-                var isOnSegment = Helper.IsCitizenOnSegment(citizenID, targets, pathManager, netManager,
+                var isOnSegment = CitizenHelper.IsCitizenOnSegment(citizenID, targets, pathManager, netManager,
                     buildingManager, districtManager, citizenManager);
 
                 if (isOnSegment)

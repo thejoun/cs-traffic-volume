@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using TrafficVolume.Extensions;
 
 namespace TrafficVolume
 {
@@ -20,14 +21,15 @@ namespace TrafficVolume
 
         public void AddVehicle(int index, VehicleManager vehicleManager)
         {
-            var vehicle = vehicleManager.m_vehicles.m_buffer[index];
-
-            if ((vehicle.m_flags & (Vehicle.Flags.Created 
-                                    | Vehicle.Flags.Deleted 
-                                    | Vehicle.Flags.WaitingPath)) == Vehicle.Flags.Created)
+            if (vehicleManager.m_vehicles.TryGetValue(index, out var vehicle))
             {
-                var transport = GetTransportType(vehicle);
-                this[transport]++;
+                if ((vehicle.m_flags & (Vehicle.Flags.Created 
+                                        | Vehicle.Flags.Deleted 
+                                        | Vehicle.Flags.WaitingPath)) == Vehicle.Flags.Created)
+                {
+                    var transport = GetTransportType(vehicle);
+                    this[transport]++;
+                }
             }
         }
 

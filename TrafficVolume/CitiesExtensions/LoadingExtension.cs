@@ -7,6 +7,9 @@ namespace TrafficVolume.CitiesExtensions
     {
 	    public override void OnLevelLoaded(LoadMode mode)
 		{
+			// allows stepping into this code with a debugger
+			base.OnLevelLoaded(mode);
+		
 			Manager.OnLevelLoaded();
 			UIManager.OnLevelLoaded();
 		}

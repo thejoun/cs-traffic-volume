@@ -1,257 +1,168 @@
 using System;
 using System.Collections.Generic;
-using ColossalFramework;
+using TrafficVolume.Extensions;
 using TrafficVolume.Managers;
-using UnityEngine;
 
-namespace TrafficVolume
+namespace TrafficVolume.Helpers
 {
-    public static class Helper
+    public static class VehicleHelper
     {
-        public static bool IsVehicleOnSegment(int index, HashSet<InstanceID> targets, PathManager pathManager,
+        public static bool IsVehicleOnSegment(int vehicleIndex, HashSet<InstanceID> targets, PathManager pathManager,
             NetManager netManager, BuildingManager buildingManager, DistrictManager districtManager,
             VehicleManager vehicleManager)
         {
-            Vehicle vehicle = vehicleManager.m_vehicles.m_buffer[index];
+            var vehicleArray = vehicleManager.m_vehicles;
+            var pathUnitArray = pathManager.m_pathUnits;
+            var segmentArray = netManager.m_segments;
+            var buildingArray = buildingManager.m_buildings;
+            var nodeArray = netManager.m_nodes;
 
-            int pathPositionIndex = vehicle.m_pathPositionIndex;
-            int startPositionIndex = pathPositionIndex != byte.MaxValue ? pathPositionIndex >> 1 : 0;
-
-            uint pathUnitID = vehicle.m_path;
-
-            bool flag1 = false;
-            bool flag2 = false;
-
-            int safetyCounter = 0;
-
-            while (pathUnitID != 0U && !flag1 && !flag2)
+            if (vehicleArray.TryGetValue(vehicleIndex, out var vehicle))
             {
-                PathUnit pathUnit = pathManager.m_pathUnits.m_buffer[(uint) (IntPtr) pathUnitID];
+                int pathPositionIndex = vehicle.m_pathPositionIndex;
+                int startPositionIndex = pathPositionIndex != byte.MaxValue ? pathPositionIndex >> 1 : 0;
 
-                int positionCount = pathUnit.m_positionCount;
+                uint pathUnitID = vehicle.m_path;
 
-                for (int positionIndex = startPositionIndex; positionIndex < positionCount; ++positionIndex)
+                bool flag1 = false;
+                bool flag2 = false;
+
+                int safetyCounter = 0;
+
+                while (pathUnitID != 0U && !flag1 && !flag2)
                 {
-                    PathUnit.Position position = pathUnit.GetPosition(positionIndex);
+                    var pathUnitIndex = (uint) (IntPtr) pathUnitID;
 
-                    InstanceID segmentInstance = new InstanceID() {NetSegment = position.m_segment};
-
-                    if (targets.Contains(segmentInstance))
+                    if (pathUnitArray.TryGetValue((int) pathUnitIndex, out var pathUnit))
                     {
-                        NetSegment segment = netManager.m_segments.m_buffer[position.m_segment];
+                        int positionCount = pathUnit.m_positionCount;
 
-                        if (segment.m_modifiedIndex < pathUnit.m_buildIndex)
+                        for (int positionIndex = startPositionIndex; positionIndex < positionCount; ++positionIndex)
                         {
-                            NetInfo netInfo = segment.Info;
+                            PathUnit.Position position = pathUnit.GetPosition(positionIndex);
 
-                            if (netInfo == null)
+                            InstanceID segmentInstance = new InstanceID() {NetSegment = position.m_segment};
+
+                            if (targets.Contains(segmentInstance))
                             {
-                                Manager.Log.WriteLog("IsVehicleOnSegment: NetInfo is null");
-                                return false;
-                            }
+                                var segmentIndex = position.m_segment;
 
-                            var hasLanes = netInfo.m_lanes != null;
-
-                            if (hasLanes)
-                            {
-                                var laneOk = position.m_lane < netInfo.m_lanes.Length;
-
-                                if (laneOk)
+                                if (segmentArray.TryGetValue(segmentIndex, out var segment))
                                 {
-                                    var lane = netInfo.m_lanes[position.m_lane];
-
-                                    if (lane == null)
+                                    if (segment.m_modifiedIndex < pathUnit.m_buildIndex)
                                     {
-                                        Manager.Log.WriteLog("Lane is null");
-                                        return false;
-                                    }
-                                    
-                                    var isVehicleLane = (lane.m_laneType &
-                                                         (NetInfo.LaneType.Vehicle | NetInfo.LaneType.TransportVehicle))
-                                                        != NetInfo.LaneType.None;
+                                        NetInfo netInfo = segment.Info;
 
-                                    if (isVehicleLane)
-                                    {
-                                        flag1 = true;
-                                        break;
+                                        if (netInfo == null)
+                                        {
+                                            Manager.Log.WriteLog("IsVehicleOnSegment: NetInfo is null");
+                                            return false;
+                                        }
+
+                                        var hasLanes = netInfo.m_lanes != null;
+
+                                        if (hasLanes)
+                                        {
+                                            var laneOk = position.m_lane < netInfo.m_lanes.Length;
+
+                                            if (laneOk)
+                                            {
+                                                var lane = netInfo.m_lanes[position.m_lane];
+
+                                                if (lane == null)
+                                                {
+                                                    Manager.Log.WriteLog("Lane is null");
+                                                    return false;
+                                                }
+
+                                                var isVehicleLane = (lane.m_laneType &
+                                                                     (NetInfo.LaneType.Vehicle |
+                                                                      NetInfo.LaneType.TransportVehicle))
+                                                                    != NetInfo.LaneType.None;
+
+                                                if (isVehicleLane)
+                                                {
+                                                    flag1 = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
                                     }
+
+                                    flag2 = true;
+                                    break;
                                 }
                             }
                         }
 
-                        flag2 = true;
-                        break;
-                    }
-                }
+                        startPositionIndex = 0;
 
-                startPositionIndex = 0;
+                        pathUnitID = pathUnit.m_nextPathUnit;
 
-                pathUnitID = pathUnit.m_nextPathUnit;
-
-                if (++safetyCounter >= 262144)
-                {
-                    Manager.Log.WriteLog("Invalid list detected\n" + System.Environment.StackTrace);
-                    
-                    break;
-                }
-            }
-
-            VehicleInfo vehicleInfo = vehicle.Info;
-
-            // important catch!
-            if (vehicleInfo == null)
-            {
-                return flag1;
-            }
-
-            var vehicleAI = vehicleInfo.m_vehicleAI;
-
-            if (!vehicleAI)
-            {
-                Manager.Log.WriteLog("VehicleAI is null");
-                return flag1;
-            }
-            
-            InstanceID targetId = vehicleAI.GetTargetID((ushort) index, ref vehicle);
-
-            bool flag3 = flag1 | targets.Contains(targetId);
-
-            var targetIsBuilding = targetId.Building != 0;
-            var targetIsNetNode = targetId.NetNode != 0;
-
-            if (targetIsBuilding)
-            {
-                var building = buildingManager.m_buildings?.m_buffer?[targetId.Building] ?? default;
-                var position = building.m_position;
-                
-                var empty = InstanceID.Empty;
-                empty.District = districtManager.GetDistrict(position);
-                bool flag4 = flag3 | targets.Contains(empty);
-                empty.Park = districtManager.GetPark(position);
-                flag3 = flag4 | targets.Contains(empty);
-            }
-
-            if (targetIsNetNode)
-            {
-                var netNode = netManager.m_nodes?.m_buffer?[targetId.NetNode] ?? default;
-                var position = netNode.m_position;
-                
-                var empty = InstanceID.Empty;
-                empty.District = districtManager.GetDistrict(position);
-                bool flag4 = flag3 | targets.Contains(empty);
-                empty.Park = districtManager.GetPark(position);
-                flag3 = flag4 | targets.Contains(empty);
-            }
-
-            return flag3;
-        }
-
-        public static bool IsCitizenOnSegment(int index, HashSet<InstanceID> targets, PathManager pathManager,
-            NetManager netManager, BuildingManager buildingManager, DistrictManager districtManager,
-            CitizenManager citizenManager)
-        {
-            bool flag1 = false;
-            
-            CitizenInstance citizenInstance = citizenManager.m_instances?.m_buffer?[index] ?? default;
-            
-            int pathPositionIndex = citizenInstance.m_pathPositionIndex;
-            
-            int num1 = pathPositionIndex != byte.MaxValue ? pathPositionIndex >> 1 : 0;
-            uint num2 = citizenInstance.m_path;
-            int num3 = 0;
-
-            bool flag2 = false;
-
-
-            while (num2 != 0U && !flag1 && !flag2)
-            {
-                var pathUnit = pathManager.m_pathUnits?.m_buffer?[(uint) (IntPtr) num2] ?? default;
-                int positionCount = pathUnit.m_positionCount;
-                
-                for (int index2 = num1; index2 < positionCount; ++index2)
-                {
-                    PathUnit.Position position = pathUnit.GetPosition(index2);
-                    
-                    InstanceID empty = InstanceID.Empty;
-                    empty.NetSegment = position.m_segment;
-                    
-                    if (targets.Contains(empty))
-                    {
-                        var netSegment = netManager.m_segments?.m_buffer?[position.m_segment] ?? default;
-                        
-                        if (netSegment.m_modifiedIndex < pathUnit.m_buildIndex)
+                        if (++safetyCounter >= 262144)
                         {
-                            NetInfo info = netSegment.Info;
+                            Manager.Log.WriteLog("Invalid list detected\n" + Environment.StackTrace);
 
-                            var hasLanes = info.m_lanes != null;
-                            var lane = position.m_lane;
-                            var mLane = hasLanes ? info.m_lanes[lane] : default;
-                            
-                            if (hasLanes && (int) lane < info.m_lanes.Length &&
-                                (mLane.m_laneType == NetInfo.LaneType.Pedestrian ||
-                                 mLane.m_laneType == NetInfo.LaneType.Vehicle &&
-                                 mLane.m_vehicleType == VehicleInfo.VehicleType.Bicycle))
-                            {
-                                flag1 = true;
-                                break;
-                            }
+                            break;
                         }
-
-                        flag2 = true;
-                        break;
                     }
                 }
 
-                num1 = 0;
-                num2 = pathUnit.m_nextPathUnit;
-                if (++num3 >= 262144)
+                VehicleInfo vehicleInfo = vehicle.Info;
+
+                // important catch!
+                if (vehicleInfo == null)
                 {
-                    CODebugBase<LogChannel>.Error(LogChannel.Core,
-                        "Invalid list detected\n" + System.Environment.StackTrace);
-                    break;
+                    return flag1;
                 }
+
+                var vehicleAI = vehicleInfo.m_vehicleAI;
+
+                if (!vehicleAI)
+                {
+                    Manager.Log.WriteLog("VehicleAI is null");
+                    return flag1;
+                }
+
+                InstanceID targetId = vehicleAI.GetTargetID((ushort) vehicleIndex, ref vehicle);
+
+                bool flag3 = flag1 | targets.Contains(targetId);
+
+                var targetIsBuilding = targetId.Building != 0;
+                var targetIsNetNode = targetId.NetNode != 0;
+
+                if (targetIsBuilding)
+                {
+                    if (buildingArray.TryGetValue(targetId.Building, out var building))
+                    {
+                        var position = building.m_position;
+
+                        var empty = InstanceID.Empty;
+                        empty.District = districtManager.GetDistrict(position);
+                        bool flag4 = flag3 | targets.Contains(empty);
+                        empty.Park = districtManager.GetPark(position);
+                        flag3 = flag4 | targets.Contains(empty);
+                    }
+                }
+
+                if (targetIsNetNode)
+                {
+                    if (nodeArray.TryGetValue(targetId.NetNode, out var netNode))
+                    {
+                        var position = netNode.m_position;
+
+                        var empty = InstanceID.Empty;
+                        empty.District = districtManager.GetDistrict(position);
+                        bool flag4 = flag3 | targets.Contains(empty);
+                        empty.Park = districtManager.GetPark(position);
+                        flag3 = flag4 | targets.Contains(empty);
+                    }
+                }
+
+                return flag3;
             }
 
-            var citizenInfo = citizenInstance.Info;
-
-            if (citizenInfo == null)
-            {
-                Manager.Log.WriteLog("Citizen info is null");
-                return flag1;
-            }
-            
-            var citizenAI = citizenInfo.m_citizenAI;
-
-            if (!citizenAI)
-            {
-                Manager.Log.WriteLog("Citizen AI is null");
-                return flag1;
-            }
-            
-            InstanceID targetId = citizenAI.GetTargetID((ushort) index, ref citizenInstance);
-            
-            bool flag3 = flag1 | targets.Contains(targetId);
-            if (targetId.Building != 0)
-            {
-                Vector3 position = buildingManager.m_buildings.m_buffer[targetId.Building].m_position;
-                InstanceID empty = InstanceID.Empty;
-                empty.District = districtManager.GetDistrict(position);
-                bool flag4 = flag3 | targets.Contains(empty);
-                empty.Park = districtManager.GetPark(position);
-                flag3 = flag4 | targets.Contains(empty);
-            }
-
-            if (targetId.NetNode != 0)
-            {
-                Vector3 position = netManager.m_nodes.m_buffer[targetId.NetNode].m_position;
-                InstanceID empty = InstanceID.Empty;
-                empty.District = districtManager.GetDistrict(position);
-                bool flag4 = flag3 | targets.Contains(empty);
-                empty.Park = districtManager.GetPark(position);
-                flag3 = flag4 | targets.Contains(empty);
-            }
-
-            return flag3;
+            return false;
         }
     }
 }

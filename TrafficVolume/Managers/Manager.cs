@@ -55,8 +55,10 @@ namespace TrafficVolume.Managers
         {
             if (AutoRefreshEnabled && UIManager.IsTrafficPanelOpen)
             {
-                var volume = LocalTraffic.CountLocalVolume();
-                UIManager.DisplayVolume(volume);
+                if (LocalTraffic.TryCountLocalVolume(out var volume))
+                {
+                    UIManager.DisplayVolume(volume);
+                }
             }
             
             Refresh?.Invoke();
